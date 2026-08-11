@@ -119,8 +119,14 @@ class Mkv:
                 self.update(1)
         
         # Audio
+        total_steps = 0
         for audio in self.audios:
-            audio.optimize()
+            total_steps += audio.get_optimization_steps()
+        
+        progress_bar = callback_tqdm(total = total_steps, unit = "steps", desc = "Optimizing audio tracks")
+        
+        for audio in self.audios:
+            audio.optimize(step_done_callback = progress_bar.step_done)
 
         # Subtitles
         total_steps = 0
@@ -137,7 +143,7 @@ class Mkv:
         if not output_dir_path.endswith("/"):
             output_dir_path += "/"
 
-        mkv_file = pymkv.MKVFile(title = self.title, mkvmerge_path = f"{MKVTOOLS_PATH}/mkvmerge")
+        mkv_file = pymkv.MKVFile(title = f"{self.title} ({self.year})", mkvmerge_path = f"{MKVTOOLS_PATH}/mkvmerge")
 
         if self.video is None:
             raise ValueError("Need video track for export")
