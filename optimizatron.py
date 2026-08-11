@@ -13,7 +13,7 @@ OUTPUT_DIR = "/Users/anael/Downloads/Films/out/"
 
 
 def encode_to_h265_mkv(file_path: str, temp_dir: tempfile.TemporaryDirectory) -> str:
-    proc = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    proc = subprocess.run(['ffprobe', "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     total_seconds = float(proc.stdout)
     class callback_tqdm(tqdm):
         def update_to(self, millis):
@@ -51,26 +51,29 @@ def main():
         temp_dir = tempfile.TemporaryDirectory(dir = TEMP_DIR)
 
         # Lecture du nom de fichier
-        movie_title = ''.join(file_name.split(".")[:-1])
+        finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", ''.join(file_name.split(".")[:-1]))
+        if len(finds) == 0:
+            continue
+
+        movie_title, year, original_language = finds[0]
 
         # Analyse de l'encodage
         file_path = f"{INPUT_DIR}{file_name}"
         encoding = file_name.split(".")[-1].upper()
         need_reencoding = not is_h265_mkv(file_path)
         if encoding == "MKV" and not need_reencoding:
-            print(f" -- {movie_title} - MKV (H.265) -- ")
+            print(f" -- {movie_title} ({year}) - MKV (H.265) -- ")
         elif encoding == "MKV":
-            print(f" -- {movie_title} - MKV (not H.265) -- ")
+            print(f" -- {movie_title} ({year}) - MKV (not H.265) -- ")
         else:
-            print(f" -- {movie_title} - {encoding} -- ")
+            print(f" -- {movie_title} ({year}) - {encoding} -- ")
 
         if need_reencoding:
             file_path = encode_to_h265_mkv(file_path, temp_dir)
 
         # Manipulation de l'objet MKV
-        mkv = Mkv(movie_title, 0, original_language = "ENG", temp_dir = temp_dir)
+        mkv = Mkv(movie_title, year, original_language = original_language, temp_dir = temp_dir)
         mkv.load_mkv(file_path)
-        # Format track titles
         # Add metadata
         mkv.optimize()
         mkv.export(OUTPUT_DIR)
