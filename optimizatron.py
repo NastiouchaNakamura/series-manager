@@ -13,14 +13,17 @@ MOVIES_OUTPUT_DIR = "/Users/anael/Downloads/Films/test_out/"
 SERIES_OUTPUT_DIR = "/Users/anael/Downloads/Films/test_out/"
 
 
-def encode_to_h265_mkv(file_path: str, temp_dir: tempfile.TemporaryDirectory) -> str:
+def encode_to_h265_mkv(file_path: str, temp_dir_path: str) -> str:
+    if not temp_dir_path.endswith("/"):
+        temp_dir_path += "/"
+
     proc = subprocess.run(['ffprobe', "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     total_seconds = float(proc.stdout)
     class callback_tqdm(tqdm):
         def update_to(self, millis):
             self.update(millis - self.n)
 
-    mkv_file_path = f"{temp_dir.name}/h265.mkv"
+    mkv_file_path = f"{temp_dir_path}h265.mkv"
     progress_bar = callback_tqdm(total = total_seconds, unit = "s", desc = "Encoding to H.265 MKV file")
     proc = subprocess.Popen(["ffmpeg", "-i", file_path, "-codec:v", "libx265", "-crf", "20", "-preset", "fast", mkv_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
     if proc.stderr is None:
@@ -61,7 +64,7 @@ def load_and_optimize(file_path: str, output_dir: str, title: str, year: int, or
         print(f" -- {title} ({year}){f' S{season:02d}E{episode:02d}' if season is not None and episode is not None else ''} - {encoding} -- ")
 
     if need_reencoding:
-        file_path = encode_to_h265_mkv(file_path, temp_dir)
+        file_path = encode_to_h265_mkv(file_path, temp_dir.name)
 
     # Manipulation de l'objet MKV
     mkv = Mkv(title, year, season, episode, original_language = original_language, temp_dir = temp_dir)

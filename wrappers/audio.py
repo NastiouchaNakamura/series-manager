@@ -10,7 +10,7 @@ class SupportedCodec(StrEnum):
 class Audio:
     def __init__(self, codec: str, file_path: str, temp_dir: tempfile.TemporaryDirectory, language: str = "UND", flag_default: bool = False, flag_forced: bool = False, flag_hearing_impaired: bool = False, flag_visual_impaired: bool = False, flag_original: bool = False):
         if codec not in SupportedCodec:
-            raise ValueError(f"Codec '{self.codec}' unsupported")
+            raise ValueError(f"Codec '{codec}' unsupported")
         
         self.codec: SupportedCodec = SupportedCodec(codec)
         self.file_path: str = file_path
