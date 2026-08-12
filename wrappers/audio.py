@@ -5,7 +5,7 @@ from typing import Callable
 
 class SupportedCodec(StrEnum):
     AC3 = "AC-3" # Optimized
-    AAC = "AAC"
+    AAC = "AAC" # Optimized
 
 class Audio:
     def __init__(self, codec: str, file_path: str, temp_dir: tempfile.TemporaryDirectory, language: str = "UND", flag_default: bool = False, flag_forced: bool = False, flag_hearing_impaired: bool = False, flag_visual_impaired: bool = False, flag_original: bool = False):
@@ -27,11 +27,16 @@ class Audio:
         if self.codec is SupportedCodec.AC3:
             step_done_callback()
             return
+        elif self.codec is SupportedCodec.AAC:
+            step_done_callback()
+            return
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
 
     def get_optimization_steps(self) -> int:
         if self.codec is SupportedCodec.AC3:
+            return 1
+        elif self.codec is SupportedCodec.AAC:
             return 1
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")

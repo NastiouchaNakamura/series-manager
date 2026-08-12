@@ -2,13 +2,13 @@ import os
 import re
 import pymkv
 
-SERIES_NAME = "Il était une fois… l'Homme"
+SERIES_NAME = "Ratz"
 ORIGINAL_LANGUAGE = "FRE"
 
 
-INPUT_DIR = "/Users/anael/Downloads/Il Etait Une Fois L'homme.TRUEFRENCH.1080p.BDLight.x265-SAHKELPLAISIR/"
-OUTPUT_DIR = "/Volumes/videos/Series/Il était une fois… l'Homme (1978)/"
-REFORMAT_PATTERN = re.compile(r"Il")
+INPUT_DIR = "/Volumes/videos/Unformated/Ratz_H.265/"
+OUTPUT_DIR = "/Volumes/videos/Series/Ratz (2003)/"
+REFORMAT_PATTERN = re.compile(r"h265_Ratz")
 
 def main():
     for file_name in os.listdir(INPUT_DIR):

@@ -22,10 +22,13 @@ def is_h265_mkv(file_path):
 
 
 class Mkv:
-    def __init__(self, title: str, year: int, original_language: str = "UND", temp_dir: tempfile.TemporaryDirectory | None = None):
-        self.title: str = title
-        self.year: int = year
-        self.original_language: str = original_language
+    def __init__(self, title: str, year: int, season: int | None = None, episode: int | None = None, original_language: str = "UND", temp_dir: tempfile.TemporaryDirectory | None = None):
+        if (season is None and episode is not None) or (season is not None and episode is None):
+                raise ValueError("Season and episode must both be None or both be not None")
+        
+        self.is_series: bool = season is not None and episode is not None
+        self.title: str = f"{title} ({year})" if not self.is_series else f"{title} - S{season:02d}E{episode:02d}"
+        self.original_language: str = original_language.upper()
         self.temp_dir: tempfile.TemporaryDirectory = tempfile.TemporaryDirectory() if temp_dir is None else temp_dir
         self.video: pymkv.MKVTrack | None = None
         self.definition = "?"
@@ -44,7 +47,6 @@ class Mkv:
                     raise ValueError("Video track codec is None")
                 else:
                     self.video = track
-                    self.video.track_name = f"{self.definition} - {track.track_codec}"
                     self.video.language = "UND"
                     self.video.compression = True
                     width = int(subprocess.run(["ffprobe", "-v", "error", "-of", "default=noprint_wrappers=1:nokey=1", "-select_streams", "v:0", "-show_entries", "stream=width", file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
@@ -53,8 +55,6 @@ class Mkv:
                         self.definition = "4K"
                     elif width == 1920 or height == 1440:
                         self.definition = "1440p"
-                    elif width == 2048 or height == 1080:
-                        self.definition = "2K"
                     elif width == 1920 or height == 1080:
                         self.definition = "1080p"
                     elif width == 1280 or height == 720:
@@ -65,13 +65,11 @@ class Mkv:
                         self.definition = "360p"
                     else:
                         self.definition = f"{width}x{height}"
+                    self.video.track_name = f"{self.definition} - {track.track_codec}"
 
             elif track.track_type == "audio":
                 if track.track_codec is None:
                     raise ValueError("Video track codec is None")
-                elif track.language is None:
-                    # Si pas de langue, doublage inutile, pas conservé.
-                    continue
                 else:
                     source_path = track.extract(f"{self.temp_dir.name}", silent = True)
                     self.audios.append(Audio(
@@ -110,6 +108,14 @@ class Mkv:
             else:
                 print(track.track_codec, f"{track.track_type}")
                 pass
+
+        # S'il n'y a qu'un seul audio d'une langue inconnue, on suppose que c'est la langue originale
+        if len(self.audios) == 1 and self.audios[0].language == "UND":
+            self.audios[0].language = self.original_language
+        # Sinon, on supprime toutes les pistes de langues inconnues
+        else:
+            self.audios = [audio for audio in self.audios if audio.language != "UND"]
+        
         mkv_file.cleanup()
 
 
@@ -122,28 +128,30 @@ class Mkv:
         total_steps = 0
         for audio in self.audios:
             total_steps += audio.get_optimization_steps()
-        
-        progress_bar = callback_tqdm(total = total_steps, unit = "steps", desc = "Optimizing audio tracks")
-        
-        for audio in self.audios:
-            audio.optimize(step_done_callback = progress_bar.step_done)
+
+        if total_steps != 0:
+            progress_bar = callback_tqdm(total = total_steps, unit = "steps", desc = "Optimizing audio tracks")
+            
+            for audio in self.audios:
+                audio.optimize(step_done_callback = progress_bar.step_done)
 
         # Subtitles
         total_steps = 0
         for subtitle in self.subtitles:
             total_steps += subtitle.get_optimization_steps()
-        
-        progress_bar = callback_tqdm(total = total_steps, unit = "steps", desc = "Optimizing subtitles tracks")
-        
-        for subtitle in self.subtitles:
-            subtitle.optimize(step_done_callback = progress_bar.step_done)
+
+        if total_steps != 0:
+            progress_bar = callback_tqdm(total = total_steps, unit = "steps", desc = "Optimizing subtitles tracks")
+            
+            for subtitle in self.subtitles:
+                subtitle.optimize(step_done_callback = progress_bar.step_done)
 
 
     def export(self, output_dir_path: str):
         if not output_dir_path.endswith("/"):
             output_dir_path += "/"
 
-        mkv_file = pymkv.MKVFile(title = f"{self.title} ({self.year})", mkvmerge_path = f"{MKVTOOLS_PATH}/mkvmerge")
+        mkv_file = pymkv.MKVFile(title = f"{self.title}", mkvmerge_path = f"{MKVTOOLS_PATH}/mkvmerge")
 
         if self.video is None:
             raise ValueError("Need video track for export")
@@ -197,5 +205,5 @@ class Mkv:
                 self.update(current - self.n)
 
         with callback_tqdm(total = 100, unit = "%", desc = "Muxing to output MKV file") as progress_bar:
-            mkv_file.mux(f"{output_dir_path}{self.title} ({self.year}).mkv", silent = True, progress_handler = progress_bar.update_to)
+            mkv_file.mux(f"{output_dir_path}{self.title}.mkv", silent = True, progress_handler = progress_bar.update_to)
         mkv_file.cleanup()
