@@ -1,7 +1,8 @@
 import tempfile
 from enum import StrEnum
-from typing import Any, Callable, Literal
+from typing import Any, Callable
 from wrappers.pgs import Pgs
+from wrappers.ass import Ass
 
 
 class SupportedCodec(StrEnum):
@@ -37,6 +38,12 @@ class Subtitles:
             self.file_path = self.subfile.to_srt(step_done_callback)
             self.codec = SupportedCodec.SRT
             self.subfile = None
+        elif self.codec is SupportedCodec.SSA:
+            if type(self.subfile) is not Ass:
+                self.subfile = Ass(self.file_path, self.temp_dir)
+            self.file_path = self.subfile.to_srt(step_done_callback)
+            self.codec = SupportedCodec.SRT
+            self.subfile = None
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
 
@@ -47,5 +54,9 @@ class Subtitles:
             if type(self.subfile) is not Pgs:
                 self.subfile = Pgs(self.file_path, self.language_codes, self.temp_dir)
             return len(self.subfile.subtitles) + len(self.subfile.subtitles[:10]) * 5
+        elif self.codec is SupportedCodec.SSA:
+            if type(self.subfile) is not Ass:
+                self.subfile = Ass(self.file_path, self.temp_dir)
+            return len(self.subfile.subtitles)
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")

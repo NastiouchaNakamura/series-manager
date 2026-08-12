@@ -12,7 +12,7 @@ class Pgs:
     def __init__(self, file_path: str, language_codes: list[str], temp_dir: tempfile.TemporaryDirectory):
         self.file_path: str = file_path
         self.language_codes: list[str] = language_codes
-        self.temp_dir = temp_dir
+        self.temp_dir: tempfile.TemporaryDirectory = temp_dir
         self.segments: list[PgsSegment] = []
         self.display_sets: list[DisplaySet] = []
 
@@ -146,7 +146,7 @@ class Pgs:
 
                 text = pytesseract.image_to_string(img, lang = tess_language, config = options).replace("\n", " ").strip()
                 if text != "":
-                    srt.write(f"{count}\n{str(dt.timedelta(seconds = sub.start_timestamp)).replace(".", ",")[:11]} --> {str(dt.timedelta(seconds = sub.end_timestamp)).replace(".", ",")[:12]}\n{text}\n\n")
+                    srt.write(f"{count}\n{str(dt.timedelta(seconds = sub.start_timestamp)).replace(".", ",")[:11]} --> {str(dt.timedelta(seconds = sub.end_timestamp)).replace(".", ",")[:11]}\n{text}\n\n")
                 
                 count += 1
                 step_done_callback()
