@@ -69,7 +69,6 @@ def load_and_optimize(file_path: str, output_dir: str, title: str, year: int, or
     # Manipulation de l'objet MKV
     mkv = Mkv(title, year, season, episode, original_language = original_language, temp_dir = temp_dir)
     mkv.load_mkv(file_path)
-    # Add metadata
     mkv.optimize()
     mkv.export(output_dir)
 
