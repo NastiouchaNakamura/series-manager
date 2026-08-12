@@ -50,7 +50,6 @@ class Ass:
                     elif section == SectionState.Events:
                         if line.startswith("Format: "):
                             eventsFormat = list(map(lambda s: s.strip(), line[8:].strip().split(",")))
-                            print(eventsFormat)
                             startIndex = eventsFormat.index("Start")
                             endIndex = eventsFormat.index("End")
                             textIndex = eventsFormat.index("Text")
