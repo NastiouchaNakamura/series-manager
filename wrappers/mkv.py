@@ -119,6 +119,38 @@ class Mkv:
         mkv_file.cleanup()
 
 
+    def get_video_from_mkv(self, file_path: str):
+        mkv_file = pymkv.MKVFile(file_path, mkvmerge_path = f"{MKVTOOLS_PATH}/mkvmerge")
+        for track in mkv_file.tracks:
+            if track.track_type == "video":
+                if track.track_codec is None:
+                    raise ValueError("Video track codec is None")
+                else:
+                    self.video = track
+                    self.video.language = "UND"
+                    self.video.compression = True
+                    width = int(subprocess.run(["ffprobe", "-v", "error", "-of", "default=noprint_wrappers=1:nokey=1", "-select_streams", "v:0", "-show_entries", "stream=width", file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
+                    height = int(subprocess.run(["ffprobe", "-v", "error", "-of", "default=noprint_wrappers=1:nokey=1", "-select_streams", "v:0", "-show_entries", "stream=height", file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
+                    if width == 3840 or height == 2160:
+                        self.definition = "4K"
+                    elif width == 1920 or height == 1440:
+                        self.definition = "1440p"
+                    elif width == 1920 or height == 1080:
+                        self.definition = "1080p"
+                    elif width == 1280 or height == 720:
+                        self.definition = "720p"
+                    elif width == 720 or height == 480:
+                        self.definition = "480p"
+                    elif width == 640 or height == 360:
+                        self.definition = "360p"
+                    else:
+                        self.definition = f"{width}x{height}"
+                    self.video.track_name = f"{self.definition} - {track.track_codec}"
+                    break
+
+        mkv_file.cleanup()
+
+
     def optimize(self):
         class callback_tqdm(tqdm):
             def step_done(self):
