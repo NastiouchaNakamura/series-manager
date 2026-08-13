@@ -3,14 +3,14 @@ import re
 import subprocess
 from time import sleep
 from tqdm import tqdm
-from wrappers.mkv import Mkv, is_h265_mkv
+from optimizatron.movie import Movie
 import tempfile
 
 
-INPUT_DIR = "/Volumes/videos/Unformated/Export Ready/"
+INPUT_DIR = "/Users/anael/Movies/Films/test_in/"
 TEMP_DIR = "/Users/anael/Movies/Films/temp/"
-MOVIES_OUTPUT_DIR = "/Volumes/videos/Movies/"
-SERIES_OUTPUT_DIR = "/Volumes/videos/Series/"
+MOVIES_OUTPUT_DIR = "/Users/anael/Movies/Films/test_out/"
+SERIES_OUTPUT_DIR = "/Users/anael/Movies/Films/test_out/"
 
 
 def load_and_optimize(file_path: str, output_dir: str, title: str, year: int, original_language: str, season: int | None = None, episode: int | None = None):
@@ -21,39 +21,12 @@ def load_and_optimize(file_path: str, output_dir: str, title: str, year: int, or
     # Dossier temporaire
     temp_dir = tempfile.TemporaryDirectory(dir = TEMP_DIR)
 
-    # Analyse de l'encodage
-    encoding = file_path.split(".")[-1].upper()
-    need_reencoding = not is_h265_mkv(file_path)
-    if encoding == "MKV" and not need_reencoding:
-        print(f" -- {title} ({year}){f' S{season:02d}E{episode:02d}' if season is not None and episode is not None else ''} - MKV (H.265) -- ")
-        # Manipulation de l'objet MKV
-        mkv = Mkv(title, year, season, episode, original_language = original_language, temp_dir = temp_dir)
-        mkv.load_mkv(file_path)
-        mkv.optimize()
-        mkv.export(output_dir)
-        
-    elif encoding == "MKV":
-        print(f" -- {title} ({year}){f' S{season:02d}E{episode:02d}' if season is not None and episode is not None else ''} - MKV (not H.265) -- ")
-        # Transcodage en MKV-H.265 (on ne conservera que la vidéo)
-        h265_file_path = encode_to_h265_mkv(file_path, temp_dir.name)
-
-        # Manipulation de l'objet MKV
-        mkv = Mkv(title, year, season, episode, original_language = original_language, temp_dir = temp_dir)
-        mkv.load_mkv(file_path)
-        mkv.get_video_from_mkv(h265_file_path)
-        mkv.optimize()
-        mkv.export(output_dir)
-
-    else:
-        print(f" -- {title} ({year}){f' S{season:02d}E{episode:02d}' if season is not None and episode is not None else ''} - {encoding} -- ")
-        # Transcodage en MKV-H.265 (qu'on conserve)
-        file_path = encode_to_h265_mkv(file_path, temp_dir.name)
-
-        # Manipulation de l'objet MKV
-        mkv = Mkv(title, year, season, episode, original_language = original_language, temp_dir = temp_dir)
-        mkv.load_mkv(file_path)
-        mkv.optimize()
-        mkv.export(output_dir)
+    # Manipulation de l'objet vidéo
+    print(f" -- {title} ({year}){f' S{season:02d}E{episode:02d}' if season is not None and episode is not None else ''} -- ")
+    movie = Movie(title, year, season, episode, original_language = original_language, temp_dir = temp_dir)
+    movie.load_file(file_path)
+    movie.optimize()
+    movie.export(output_dir)
 
     # Suppression du dossier temporaire
     temp_dir.cleanup()
@@ -137,7 +110,3 @@ def main():
 
         except Exception as e:
             print(f"An error occurred during process of movie {file_name}: {e}")
-
-
-if __name__ == "__main__":
-    main()
