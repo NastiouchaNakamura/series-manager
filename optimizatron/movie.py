@@ -45,6 +45,14 @@ class Movie:
             # Sinon, on supprime toutes les pistes de langues inconnues
             self.audios = [audio for audio in self.audios if audio.language != "UND"]
 
+        # Sous-titres en langue inconnue inutiles
+        to_remove = []
+        for subtitle in self.subtitles:
+            if subtitle.language == "UND":
+                to_remove.append(subtitle)
+        for subtitle in to_remove:
+            self.subtitles.remove(subtitle)
+
         # Pour 2 subs identiques sauf le codec on enlève celui qui n'est pas
         # SRT, ou bien le plus lourd. C'est un ordre total donc pas de cycle.
         to_remove = []
@@ -161,51 +169,47 @@ class Movie:
                 if track.track_type == "video":
                     if track.track_codec is None:
                         raise ValueError("Video track codec is None")
-                    else:
-                        source_path = track.extract(f"{self.temp_dir.name}", silent = True)
-                        self.video = Video(
-                            VideoCodec.by_name(track.track_codec),
-                            source_path,
-                            self.temp_dir
-                        )
+                    source_path = track.extract(f"{self.temp_dir.name}", silent = True)
+                    self.video = Video(
+                        VideoCodec.by_name(track.track_codec),
+                        source_path,
+                        self.temp_dir
+                    )
 
                 elif track.track_type == "audio":
                     if track.track_codec is None:
-                        raise ValueError("Video track codec is None")
-                    else:
-                        source_path = track.extract(f"{self.temp_dir.name}", silent = True)
-                        self.audios.append(Audio(
-                            AudioCodec.by_name(track.track_codec),
-                            source_path,
-                            self.temp_dir,
-                            language = track.language if track.language is not None else "UND",
-                            flag_default = track.default_track if track.default_track is not None else track.language == "FRE",
-                            flag_forced = False if track.track_name is None else "FORCÉ" in track.track_name.upper() or "FORCED" in track.track_name.upper(),
-                            flag_hearing_impaired = False,
-                            flag_visual_impaired = track.flag_visual_impaired if track.flag_visual_impaired is not None else False if track.track_name is None else "AD" in track.track_name.upper() or "AUDIO DESCRIPTION" in track.track_name.upper() or "AUDIO-DESCRIPTION" in track.track_name.upper() or "AUDIODESCRIPTION" in track.track_name.upper(),
-                            flag_original = track.matches_language(self.original_language)
-                        ))
+                        raise ValueError("Audio track codec is None")
+                    source_path = track.extract(f"{self.temp_dir.name}", silent = True)
+                    self.audios.append(Audio(
+                        AudioCodec.by_name(track.track_codec),
+                        source_path,
+                        self.temp_dir,
+                        language = track.language if track.language is not None else "UND",
+                        flag_default = track.default_track if track.default_track is not None else track.language == "FRE",
+                        flag_forced = False if track.track_name is None else "FORCÉ" in track.track_name.upper() or "FORCED" in track.track_name.upper(),
+                        flag_hearing_impaired = False,
+                        flag_visual_impaired = track.flag_visual_impaired if track.flag_visual_impaired is not None else False if track.track_name is None else "AD" in track.track_name.upper() or "AUDIO DESCRIPTION" in track.track_name.upper() or "AUDIO-DESCRIPTION" in track.track_name.upper() or "AUDIODESCRIPTION" in track.track_name.upper(),
+                        flag_original = track.matches_language(self.original_language)
+                    ))
 
                 elif track.track_type == "subtitles":
                     if track.track_codec is None:
-                        raise ValueError("Video track codec is None")
-                    elif track.language is None:
-                        # Si pas de langue, sous-titre inutile, pas conservé.
-                        continue
-                    else:
-                        source_path = track.extract(f"{self.temp_dir.name}", silent = True)
-                        self.subtitles.append(Subtitles(
-                            SubtitlesCodec.by_name(track.track_codec),
-                            source_path,
-                            self.temp_dir,
-                            language = track.language.upper(),
-                            language_codes = list(pymkv.Languages.language_equivalents(track.language, mkvmerge_path = (f'{MKVTOOLS_PATH}/mkvmerge',))),
-                            flag_default = track.default_track if track.default_track is not None else False,
-                            flag_forced = False if track.track_name is None else "FORCÉ" in track.track_name.upper() or "FORCED" in track.track_name.upper(),
-                            flag_hearing_impaired = track.flag_hearing_impaired if track.flag_hearing_impaired is not None else False if track.track_name is None else "CC" in track.track_name.upper() or "CLOSED CAPTIONS" in track.track_name.upper() or "SDH" in track.track_name.upper(),
-                            flag_visual_impaired = False,
-                            flag_original = track.matches_language(self.original_language)
-                        ))
+                        raise ValueError("Subtitles track codec is None")
+                    if track.language is None:
+                        raise ValueError("Subtitles track has no language")
+                    source_path = track.extract(f"{self.temp_dir.name}", silent = True)
+                    self.subtitles.append(Subtitles(
+                        SubtitlesCodec.by_name(track.track_codec),
+                        source_path,
+                        self.temp_dir,
+                        language = track.language.upper(),
+                        language_codes = list(pymkv.Languages.language_equivalents(track.language, mkvmerge_path = (f'{MKVTOOLS_PATH}/mkvmerge',))),
+                        flag_default = track.default_track if track.default_track is not None else False,
+                        flag_forced = False if track.track_name is None else "FORCÉ" in track.track_name.upper() or "FORCED" in track.track_name.upper(),
+                        flag_hearing_impaired = track.flag_hearing_impaired if track.flag_hearing_impaired is not None else False if track.track_name is None else "CC" in track.track_name.upper() or "CLOSED CAPTIONS" in track.track_name.upper() or "SDH" in track.track_name.upper(),
+                        flag_visual_impaired = False,
+                        flag_original = track.matches_language(self.original_language)
+                    ))
 
                 else:
                     print(track.track_codec, f"{track.track_type}")
@@ -287,7 +291,7 @@ class Movie:
             if subtitle.flag_hearing_impaired: track_name += " (SME)"
             if subtitle.flag_forced: track_name += " (Forcés)"
             mkv_file.add_track(pymkv.MKVTrack(
-                track_name = f"{subtitle.language} - {subtitle.codec}",
+                track_name = f"{track_name} - {subtitle.codec}",
                 file_path = subtitle.file_path,
                 language = subtitle.language,
                 default_track = subtitle.flag_default,
