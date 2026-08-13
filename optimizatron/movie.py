@@ -263,7 +263,7 @@ class Movie:
             raise ValueError("Need video track for export")
         else:
             mkv_file.add_track(pymkv.MKVTrack(
-                track_name = f"{self.video.definition} - {self.video.codec}",
+                track_name = f"{self.video.definition} - {self.video.codec.mkvtools_name}",
                 file_path = self.video.file_path,
                 language = "UND",
                 default_track = True,
@@ -281,7 +281,7 @@ class Movie:
             if audio.flag_original: track_name += " (VO)"
             if audio.flag_visual_impaired: track_name += " (AD)"
             mkv_file.add_track(pymkv.MKVTrack(
-                track_name = f"{track_name} - {audio.codec}",
+                track_name = f"{track_name} - {audio.codec.mkvtools_name}",
                 file_path = audio.file_path,
                 language = audio.language,
                 default_track = audio.flag_default,
@@ -300,7 +300,7 @@ class Movie:
             if subtitle.flag_hearing_impaired: track_name += " (SME)"
             if subtitle.flag_forced: track_name += " (Forcés)"
             mkv_file.add_track(pymkv.MKVTrack(
-                track_name = f"{track_name} - {subtitle.codec}",
+                track_name = f"{track_name} - {subtitle.codec.mkvtools_name}",
                 file_path = subtitle.file_path,
                 language = subtitle.language,
                 default_track = subtitle.flag_default,
