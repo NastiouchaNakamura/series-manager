@@ -40,7 +40,7 @@ class Video:
             # Obligé de transcoder en MKV H265, et pas en H265 direct, pour éviter les bugs (frames manquantes, audio désynchronisé, etc…)
             mkv_file_path = f"{self.temp_dir.name}/{id(self)}_h265.mkv"
             # https://scottstuff.net/posts/2025/03/17/benchmarking-ffmpeg-h265/
-            proc = subprocess.Popen(["ffmpeg", "-i", self.file_path, "-codec:v", "libx265", "-crf", "20.6", "-tune", "fastdecode", "-preset", "veryfast", mkv_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
+            proc = subprocess.Popen(["ffmpeg", "-i", self.file_path, "-codec:v", "libx265", "-crf", "20.6", "-tune", "slow", "-preset", "veryfast", mkv_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
             if proc.stderr is None:
                 raise ValueError("Popen process stderr is None")
     
