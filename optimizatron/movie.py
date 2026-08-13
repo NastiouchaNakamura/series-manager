@@ -1,4 +1,4 @@
-from enum import StrEnum
+import shutil
 import subprocess
 import pymkv
 import tempfile
@@ -103,20 +103,20 @@ class Movie:
                     codec = VideoCodec.by_name(codec_name)
                     if codec == VideoCodec.H265:
                         # Si la vidéo est déjà en H.265, alors il est possible de l'extraire en standalone
-                        path = f"{self.temp_dir.name}/{id(self)}_{index}{codec.file_extension}"
-                        subprocess.run(["ffmpeg", "-i", file_path, "-map", f"0:{index}", "-c", codec.ffmpeg_encoder if codec.ffmpeg_encoder is not None else "copy", path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        self.video = Video(
-                            codec,
-                            path,
-                            self.temp_dir
-                        )
+                        h265_path = f"{self.temp_dir.name}/{id(self)}_{index}{codec.file_extension}"
+                        subprocess.run(["ffmpeg", "-i", file_path, "-map", f"0:{index}", "-c", codec.ffmpeg_encoder if codec.ffmpeg_encoder is not None else "copy", h265_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        self.video = Video(codec, h265_path, self.temp_dir)
                     else:
-                        # Sinon, il est impossible de l'extraire en standalone (perte de frames et autres bugs en tout genre)
-                        self.video = Video(
-                            codec,
-                            file_path,
-                            self.temp_dir
-                        )
+                        # Sinon, il est impossible de l'extraire en standalone
+                        # (perte de frames et autres bugs en tout genre)
+                        # Donc on utilise le fichier d'origine comme source
+                        # On le copie pour décharger les échanges avec le NAS
+                        # En cas de longue conversion, cela permet la veille.
+                        file_path = shutil.copyfile(file_path, f"{self.temp_dir.name}/{id(self)}_original.{file_path.split("/")[-1].split(".")[-1]}")
+                        self.video = Video(codec, file_path, self.temp_dir)
+                        # On remplace le chemin original pour décharger le NAS
+                        # pour les prochaines itérations (quitte à l'avoir DL,
+                        # autant s'en servir vite).
 
                 elif type == "audio":
                     codec = AudioCodec.by_name(codec_name)
@@ -169,16 +169,24 @@ class Movie:
                 if track.track_type == "video":
                     if track.track_codec is None:
                         raise ValueError("Video track codec is None")
-                    source_path = track.extract(f"{self.temp_dir.name}", silent = True)
-                    self.video = Video(
-                        VideoCodec.by_name(track.track_codec),
-                        source_path,
-                        self.temp_dir
-                    )
+                    codec = VideoCodec.by_name(track.track_codec)
+                    if codec == VideoCodec.H265:
+                        # Si la vidéo est déjà en H.265, alors il est possible de l'extraire en standalone
+                        h265_path = track.extract(f"{self.temp_dir.name}", silent = True)
+                        self.video = Video(codec, h265_path, self.temp_dir)
+                    else:
+                        # Sinon, il est impossible de l'extraire en standalone
+                        # (perte de frames et autres bugs en tout genre)
+                        # Donc on utilise le fichier d'origine comme source
+                        # On le copie pour décharger les échanges avec le NAS
+                        # En cas de longue conversion, cela permet la veille.
+                        copied_file_path = shutil.copyfile(mkv_file_path, f"{self.temp_dir.name}/{id(self)}_original.mkv")
+                        self.video = Video(codec, copied_file_path, self.temp_dir)
 
                 elif track.track_type == "audio":
                     if track.track_codec is None:
                         raise ValueError("Audio track codec is None")
+                    codec = AudioCodec.by_name(track.track_codec)
                     source_path = track.extract(f"{self.temp_dir.name}", silent = True)
                     self.audios.append(Audio(
                         AudioCodec.by_name(track.track_codec),
@@ -197,6 +205,7 @@ class Movie:
                         raise ValueError("Subtitles track codec is None")
                     if track.language is None:
                         raise ValueError("Subtitles track has no language")
+                    codec = SubtitlesCodec.by_name(track.track_codec)
                     source_path = track.extract(f"{self.temp_dir.name}", silent = True)
                     self.subtitles.append(Subtitles(
                         SubtitlesCodec.by_name(track.track_codec),

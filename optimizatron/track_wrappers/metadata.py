@@ -1,5 +1,6 @@
 from random import randint
 
+
 class Metadata:
     def __init__(self, title: str, metadatas: dict[str, str], freetext: str):
         self.title: str = title
