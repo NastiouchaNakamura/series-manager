@@ -7,8 +7,8 @@ from wrappers.mkv import Mkv, is_h265_mkv
 import tempfile
 
 
-INPUT_DIR = "/Users/anael/Downloads/Films/in/"
-TEMP_DIR = "/Users/anael/Downloads/Films/temp/"
+INPUT_DIR = "/Volumes/videos/Unformated/Export Ready/"
+TEMP_DIR = "/Users/anael/Movies/Films/temp/"
 MOVIES_OUTPUT_DIR = "/Volumes/videos/Movies/"
 SERIES_OUTPUT_DIR = "/Volumes/videos/Series/"
 
@@ -71,7 +71,8 @@ def encode_to_h265_mkv(file_path: str, temp_dir_path: str) -> str:
 
     mkv_file_path = f"{temp_dir_path}{abs(hash(file_path))}_h265.mkv"
     progress_bar = callback_tqdm(total = total_seconds, unit = "s", desc = "Encoding to H.265 MKV file")
-    proc = subprocess.Popen(["ffmpeg", "-i", file_path, "-codec:v", "libx265", "-crf", "20", "-preset", "fast", mkv_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
+    # https://scottstuff.net/posts/2025/03/17/benchmarking-ffmpeg-h265/
+    proc = subprocess.Popen(["ffmpeg", "-i", file_path, "-codec:v", "libx265", "-crf", "20.6", "-tune", "fastdecode", "-preset", "slow", mkv_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
     if proc.stderr is None:
         raise ValueError("???")
     line = b""
@@ -103,31 +104,39 @@ def main():
 
     # Séries
     for dir_name in series_dirs:
-        finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", dir_name)
-        if len(finds) == 0:
-            continue
-        title, year, original_language = finds[0]
-
-        if not os.path.exists(f"{SERIES_OUTPUT_DIR}{title} ({year})"):
-            os.mkdir(f"{SERIES_OUTPUT_DIR}{title} ({year})")
-
-        # Chaque épisode
-        for file_name in sorted([file for file in os.listdir(f"{INPUT_DIR}{dir_name}/") if os.path.isfile(f"{INPUT_DIR}{dir_name}/{file}") and not file.startswith(".")]):
-            finds = re.findall(r"S(?P<season_no>\d\d)E(?P<episode_no>\d\d)", file_name)
+        try:
+            finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", dir_name)
             if len(finds) == 0:
                 continue
-            season_no, episode_no = map(int, finds[0])
-            
-            load_and_optimize(f"{INPUT_DIR}{dir_name}/{file_name}", f"{SERIES_OUTPUT_DIR}{title} ({year})/", title, year, original_language, season_no, episode_no)
+            title, year, original_language = finds[0]
+
+            if not os.path.exists(f"{SERIES_OUTPUT_DIR}{title} ({year})"):
+                os.mkdir(f"{SERIES_OUTPUT_DIR}{title} ({year})")
+
+            # Chaque épisode
+            for file_name in sorted([file for file in os.listdir(f"{INPUT_DIR}{dir_name}/") if os.path.isfile(f"{INPUT_DIR}{dir_name}/{file}") and not file.startswith(".")]):
+                finds = re.findall(r"S(?P<season_no>\d\d)E(?P<episode_no>\d\d)", file_name)
+                if len(finds) == 0:
+                    continue
+                season_no, episode_no = map(int, finds[0])
+                
+                load_and_optimize(f"{INPUT_DIR}{dir_name}/{file_name}", f"{SERIES_OUTPUT_DIR}{title} ({year})/", title, year, original_language, season_no, episode_no)
+
+        except Exception as e:
+            print(f"An error occurred during process of series {dir_name}: {e}")
 
     # Films
     for file_name in sorted(movies_files):
-        finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", file_name)
-        if len(finds) == 0:
-            continue
-        title, year, original_language = finds[0]
-        
-        load_and_optimize(f"{INPUT_DIR}{file_name}", f"{MOVIES_OUTPUT_DIR}", title, year, original_language, None, None)
+        try:
+            finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", file_name)
+            if len(finds) == 0:
+                continue
+            title, year, original_language = finds[0]
+            
+            load_and_optimize(f"{INPUT_DIR}{file_name}", f"{MOVIES_OUTPUT_DIR}", title, year, original_language, None, None)
+
+        except Exception as e:
+            print(f"An error occurred during process of movie {file_name}: {e}")
 
 
 if __name__ == "__main__":
