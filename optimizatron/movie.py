@@ -56,7 +56,6 @@ class Movie:
                     and subtitle_1.flag_forced == subtitle_2.flag_forced \
                     and subtitle_1.flag_hearing_impaired == subtitle_2.flag_hearing_impaired \
                     and subtitle_1.flag_visual_impaired == subtitle_2.flag_visual_impaired:
-                    print(subtitle_1, "vs", subtitle_2)
                     if subtitle_1.codec is SubtitlesCodec.SRT:
                         to_remove.append(subtitle_2)
                     elif subtitle_2.codec is SubtitlesCodec.SRT:

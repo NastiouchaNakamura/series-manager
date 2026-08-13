@@ -1,8 +1,5 @@
 import os
 import re
-import subprocess
-from time import sleep
-from tqdm import tqdm
 from optimizatron.movie import Movie
 import tempfile
 
@@ -14,6 +11,9 @@ SERIES_OUTPUT_DIR = "/Users/anael/Movies/Films/test_out/"
 
 
 def load_and_optimize(file_path: str, output_dir: str, title: str, year: int, original_language: str, season: int | None = None, episode: int | None = None):
+    # Affichage
+    print(f" -- {title} ({year}){f' S{season:02d}E{episode:02d}' if season is not None and episode is not None else ''} -- ")
+
     # Vérification
     if (season is None and episode is not None) or (season is not None and episode is None):
         raise ValueError("Season and episode must both be None or both be not None")
@@ -22,47 +22,18 @@ def load_and_optimize(file_path: str, output_dir: str, title: str, year: int, or
     temp_dir = tempfile.TemporaryDirectory(dir = TEMP_DIR)
 
     # Manipulation de l'objet vidéo
-    print(f" -- {title} ({year}){f' S{season:02d}E{episode:02d}' if season is not None and episode is not None else ''} -- ")
-    movie = Movie(title, year, season, episode, original_language = original_language, temp_dir = temp_dir)
-    movie.load_file(file_path)
-    movie.optimize()
-    movie.export(output_dir)
+    try:
+        movie = Movie(title, year, season, episode, original_language = original_language, temp_dir = temp_dir)
+        movie.load_file(file_path)
+        movie.optimize()
+        movie.export(output_dir)
+    except Exception as e:
+        print(f"An error occurred during process: {e}")
+        if input("Display traceback? (y/n)") == "y":
+            raise e
 
     # Suppression du dossier temporaire
     temp_dir.cleanup()
-
-
-def encode_to_h265_mkv(file_path: str, temp_dir_path: str) -> str:
-    if not temp_dir_path.endswith("/"):
-        temp_dir_path += "/"
-
-    proc = subprocess.run(['ffprobe', "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    total_seconds = float(proc.stdout)
-    class callback_tqdm(tqdm):
-        def update_to(self, millis):
-            self.update(millis - self.n)
-
-    mkv_file_path = f"{temp_dir_path}{abs(hash(file_path))}_h265.mkv"
-    progress_bar = callback_tqdm(total = total_seconds, unit = "s", desc = "Encoding to H.265 MKV file")
-    # https://scottstuff.net/posts/2025/03/17/benchmarking-ffmpeg-h265/
-    proc = subprocess.Popen(["ffmpeg", "-i", file_path, "-codec:v", "libx265", "-crf", "20.6", "-tune", "fastdecode", "-preset", "slow", mkv_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
-    if proc.stderr is None:
-        raise ValueError("???")
-    line = b""
-    while proc.poll() is None:
-        next_b = proc.stderr.read(1)
-        if next_b == b"\r":
-            finds = re.findall(r"time= ?(\d\d):(\d\d):(\d\d.\d\d)", line.decode("utf-8"))
-            if len(finds) == 0:
-                continue
-            progress_bar.update_to(int(finds[0][0]) * 3600 + int(finds[0][1]) * 60 + float(f"{finds[0][2]}"))
-            line = b""
-            sleep(0.5)
-        else:
-            line += next_b
-    progress_bar.close()
-    proc.wait()
-    return mkv_file_path
 
 
 def main():
@@ -77,36 +48,28 @@ def main():
 
     # Séries
     for dir_name in series_dirs:
-        try:
-            finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", dir_name)
+        finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", dir_name)
+        if len(finds) == 0:
+            continue
+        title, year, original_language = finds[0]
+
+        if not os.path.exists(f"{SERIES_OUTPUT_DIR}{title} ({year})"):
+            os.mkdir(f"{SERIES_OUTPUT_DIR}{title} ({year})")
+
+        # Chaque épisode
+        for file_name in sorted([file for file in os.listdir(f"{INPUT_DIR}{dir_name}/") if os.path.isfile(f"{INPUT_DIR}{dir_name}/{file}") and not file.startswith(".")]):
+            finds = re.findall(r"S(?P<season_no>\d\d)E(?P<episode_no>\d\d)", file_name)
             if len(finds) == 0:
                 continue
-            title, year, original_language = finds[0]
-
-            if not os.path.exists(f"{SERIES_OUTPUT_DIR}{title} ({year})"):
-                os.mkdir(f"{SERIES_OUTPUT_DIR}{title} ({year})")
-
-            # Chaque épisode
-            for file_name in sorted([file for file in os.listdir(f"{INPUT_DIR}{dir_name}/") if os.path.isfile(f"{INPUT_DIR}{dir_name}/{file}") and not file.startswith(".")]):
-                finds = re.findall(r"S(?P<season_no>\d\d)E(?P<episode_no>\d\d)", file_name)
-                if len(finds) == 0:
-                    continue
-                season_no, episode_no = map(int, finds[0])
-                
-                load_and_optimize(f"{INPUT_DIR}{dir_name}/{file_name}", f"{SERIES_OUTPUT_DIR}{title} ({year})/", title, year, original_language, season_no, episode_no)
-
-        except Exception as e:
-            print(f"An error occurred during process of series {dir_name}: {e}")
+            season_no, episode_no = map(int, finds[0])
+            
+            load_and_optimize(f"{INPUT_DIR}{dir_name}/{file_name}", f"{SERIES_OUTPUT_DIR}{title} ({year})/", title, year, original_language, season_no, episode_no)
 
     # Films
     for file_name in sorted(movies_files):
-        try:
-            finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", file_name)
-            if len(finds) == 0:
-                continue
-            title, year, original_language = finds[0]
-            
-            load_and_optimize(f"{INPUT_DIR}{file_name}", f"{MOVIES_OUTPUT_DIR}", title, year, original_language, None, None)
-
-        except Exception as e:
-            print(f"An error occurred during process of movie {file_name}: {e}")
+        finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", file_name)
+        if len(finds) == 0:
+            continue
+        title, year, original_language = finds[0]
+        
+        load_and_optimize(f"{INPUT_DIR}{file_name}", f"{MOVIES_OUTPUT_DIR}", title, year, original_language, None, None)
