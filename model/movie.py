@@ -265,13 +265,13 @@ class Movie:
 
         self.metadata.metadatas["audio_track_count"] = f"{len(self.audios)}"
         for i, audio in enumerate(self.audios):
-            self.metadata.metadatas[f"audio_track_{i + 1}_codec"] = audio.codec.mkvtools_name
-            self.metadata.metadatas[f"audio_track_{i + 1}_language"] = audio.language
+            self.metadata.metadatas[f"audio_track_{i}_codec"] = audio.codec.mkvtools_name
+            self.metadata.metadatas[f"audio_track_{i}_language"] = audio.language
 
         self.metadata.metadatas["subtitle_track_count"] = f"{len(self.subtitles)}"
         for i, subtitle in enumerate(self.subtitles):
-            self.metadata.metadatas[f"subtitle_track_{i + 1 + len(self.audios)}_codec"] = subtitle.codec.mkvtools_name
-            self.metadata.metadatas[f"subtitle_track_{i + 1 + len(self.audios)}_language"] = subtitle.language
+            self.metadata.metadatas[f"subtitle_track_{i}_codec"] = subtitle.codec.mkvtools_name
+            self.metadata.metadatas[f"subtitle_track_{i}_language"] = subtitle.language
 
 
     def export(self, output_dir_path: str) -> None:
