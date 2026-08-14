@@ -77,8 +77,8 @@ if __name__ == "__main__":
         while True:
             print(f"Scan of input directory '{input_dir}'…")
             all_files = os.listdir(input_dir)
-            movies_files = [file for file in all_files if os.path.isfile(f"{input_dir}{file}") and not file.startswith(".")]
-            series_dirs = [file for file in all_files if os.path.isdir(f"{input_dir}{file}") and not file.startswith(".")]
+            movies_files = [file for file in all_files if os.path.isfile(f"{input_dir}{file}") and not file.startswith(".") and not file.startswith("DONE - ")]
+            series_dirs = [file for file in all_files if os.path.isdir(f"{input_dir}{file}") and not file.startswith(".") and not file.startswith("DONE - ")]
             series_files = []
             for dir in series_dirs:
                 series_files.extend([file for file in os.listdir(f"{input_dir}{dir}/") if os.path.isfile(f"{input_dir}{dir}/{file}") and not file.startswith(".")])
@@ -106,6 +106,7 @@ if __name__ == "__main__":
                             else:
                                 season_no, episode_no = map(int, finds[0])
                                 process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/", temp_dir, title, year, original_language, season_no, episode_no, force_av1 = force_av1, mkvtools_path = mkvtools_path)
+                        os.rename(f"{input_dir}{dir_name}", f"{input_dir}DONE - {input_dir}{dir_name}")
 
             else:
                 for file_name in movies_files:
@@ -116,6 +117,7 @@ if __name__ == "__main__":
                     else:
                         title, year, original_language = finds[0]
                         process(f"{input_dir}{file_name}", movies_output_dir, temp_dir, title, year, original_language, None, None, force_av1 = force_av1, mkvtools_path = mkvtools_path)
+                        os.rename(f"{input_dir}{file_name}", f"{input_dir}DONE - {input_dir}{file_name}")
             
             sleep(5)
 
