@@ -1,11 +1,14 @@
+import platform
 import shutil
 import subprocess
 import pymkv
 import tempfile
 from tqdm import tqdm
+from time import time
 from optimizatron.track_wrappers.audio import Audio
 from optimizatron.track_wrappers.subtitles import Subtitles
 from optimizatron.track_wrappers.video import Video
+from optimizatron.track_wrappers.metadata import Metadata
 from optimizatron.codecs import VideoCodec, AudioCodec, SubtitlesCodec
 
 
@@ -23,6 +26,8 @@ class Movie:
         self.video: Video | None = None
         self.audios: list[Audio] = []
         self.subtitles: list[Subtitles] = []
+        self.metadata: Metadata | None = None
+        self.init_ts: float = time()
 
 
     def load_file(self, file_path: str) -> None:
@@ -101,23 +106,17 @@ class Movie:
 
                 if type == "video":
                     codec = VideoCodec.by_name(codec_name)
-                    if codec is VideoCodec.H265:
-                        # Si la vidéo est en H.265, alors il est possible de
-                        # l'extraire en standalone (économie de place)
-                        h265_path = f"{self.temp_dir.name}/{id(self)}_{index}{codec.file_extension}"
-                        subprocess.run(["ffmpeg", "-i", file_path, "-map", f"0:{index}", "-c", codec.ffmpeg_encoder if codec.ffmpeg_encoder is not None else "copy", h265_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        self.video = Video(codec, h265_path, self.temp_dir)
-                    else:
-                        # Sinon, il est impossible de l'extraire en standalone
-                        # (perte de frames et autres bugs en tout genre)
-                        # Donc on utilise le fichier d'origine comme source
-                        # On le copie pour décharger les échanges avec le NAS
-                        # En cas de longue conversion, cela permet la veille.
-                        file_path = shutil.copyfile(file_path, f"{self.temp_dir.name}/{id(self)}_original.{file_path.split("/")[-1].split(".")[-1]}")
-                        self.video = Video(codec, file_path, self.temp_dir)
-                        # On remplace le chemin original pour décharger le NAS
-                        # pour les prochaines itérations (quitte à l'avoir DL,
-                        # autant s'en servir vite).
+                    # Il est impossible d'extraire en standalone quasi tous les
+                    # codec vidéo (tous sauf H.265 et encore), car entre autre
+                    # les standalone ne sont pas reconnus par FFMPEG pour les
+                    # fonctions utilisées dans ce code, mais aussi cela
+                    # provoque d'autre problèmes au remuxage (perte de frames
+                    # et autres bugs en tout genre). Donc on utilise le fichier
+                    # d'origine comme source. On le copie pour décharger les
+                    # échanges avec le NAS. En cas de longue conversion, cela
+                    # permet la veille.
+                    file_path = shutil.copyfile(file_path, f"{self.temp_dir.name}/{id(self)}_original.{file_path.split("/")[-1].split(".")[-1]}")
+                    self.video = Video(codec, file_path, self.temp_dir)
 
                 elif type == "audio":
                     codec = AudioCodec.by_name(codec_name)
@@ -171,19 +170,17 @@ class Movie:
                     if track.track_codec is None:
                         raise ValueError("Video track codec is None")
                     codec = VideoCodec.by_name(track.track_codec)
-                    if codec is VideoCodec.H265:
-                        # Si la vidéo est en H.265, alors il est possible de
-                        # l'extraire en standalone (économie de place)
-                        h265_path = track.extract(f"{self.temp_dir.name}", silent = True)
-                        self.video = Video(codec, h265_path, self.temp_dir)
-                    else:
-                        # Sinon, il est impossible de l'extraire en standalone
-                        # (perte de frames et autres bugs en tout genre)
-                        # Donc on utilise le fichier d'origine comme source
-                        # On le copie pour décharger les échanges avec le NAS
-                        # En cas de longue conversion, cela permet la veille.
-                        copied_file_path = shutil.copyfile(mkv_file_path, f"{self.temp_dir.name}/{id(self)}_original.mkv")
-                        self.video = Video(codec, copied_file_path, self.temp_dir)
+                    # Il est impossible d'extraire en standalone quasi tous les
+                    # codec vidéo (tous sauf H.265 et encore), car entre autre
+                    # les standalone ne sont pas reconnus par FFMPEG pour les
+                    # fonctions utilisées dans ce code, mais aussi cela
+                    # provoque d'autre problèmes au remuxage (perte de frames
+                    # et autres bugs en tout genre). Donc on utilise le fichier
+                    # d'origine comme source. On le copie pour décharger les
+                    # échanges avec le NAS. En cas de longue conversion, cela
+                    # permet la veille.
+                    file_path = shutil.copyfile(mkv_file_path, f"{self.temp_dir.name}/{id(self)}_original.mkv")
+                    self.video = Video(codec, file_path, self.temp_dir)
 
                 elif track.track_type == "audio":
                     if track.track_codec is None:
@@ -255,6 +252,29 @@ class Movie:
         self.remove_useless_tracks()
 
 
+    def make_metadata(self):
+        if self.video is None:
+            raise ValueError("Video track is None, can't make metadata from nothing")
+        self.metadata = Metadata(self.title, {
+            "title": self.title,
+            "video_codec": self.video.codec.mkvtools_name,
+            "metric": f"{round(self.video.metric, 2)} Go/h",
+            "processing_server": platform.node(),
+            "processing_duration": f"{round(time() - self.init_ts, 2)}",
+            "processing_datetime": f"{round(time())}"
+        }, "", self.temp_dir)
+
+        self.metadata.metadatas["audio_track_count"] = f"{len(self.audios)}"
+        for i, audio in enumerate(self.audios):
+            self.metadata.metadatas[f"audio_track_{i + 1}_codec"] = audio.codec.mkvtools_name
+            self.metadata.metadatas[f"audio_track_{i + 1}_language"] = audio.language
+
+        self.metadata.metadatas["subtitle_track_count"] = f"{len(self.audios)}"
+        for i, subtitle in enumerate(self.subtitles):
+            self.metadata.metadatas[f"subtitle_track_{i + 1 + len(self.audios)}_codec"] = subtitle.codec.mkvtools_name
+            self.metadata.metadatas[f"subtitle_track_{i + 1 + len(self.audios)}_language"] = subtitle.language
+
+
     def export(self, output_dir_path: str) -> None:
         if not output_dir_path.endswith("/"):
             output_dir_path += "/"
@@ -314,6 +334,10 @@ class Movie:
                 mkvmerge_path = f"{MKVTOOLS_PATH}/mkvmerge",
                 mkvextract_path = f"{MKVTOOLS_PATH}/mkvextract"
             ))
+
+        if self.metadata is not None:
+            metadata_path = self.metadata.make_file()
+            mkv_file.add_attachment(pymkv.MKVAttachment(metadata_path, "Movie information", "Additionnal movie metadata and information."))
 
         with ProgressBar("Muxing to output MKV file", 100, "%") as progress_bar:
             mkv_file.mux(f"{output_dir_path}{self.title}.mkv", silent = True, progress_handler = progress_bar.update_to_n)

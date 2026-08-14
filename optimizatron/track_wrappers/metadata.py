@@ -1,11 +1,13 @@
 from random import randint
+import tempfile
 
 
 class Metadata:
-    def __init__(self, title: str, metadatas: dict[str, str], freetext: str):
+    def __init__(self, title: str, metadatas: dict[str, str], freetext: str, temp_dir: tempfile.TemporaryDirectory):
         self.title: str = title
         self.metadatas: dict[str, str] = metadatas
         self.freetext: str = freetext
+        self.temp_dir = temp_dir
 
     def get_string(self) -> str:
         # Header
@@ -50,7 +52,10 @@ class Metadata:
         return "".join(parts)
 
     def make_file(self) -> str:
-        return ""
+        new_file_path = f"{self.temp_dir.name}/{id(self)}.txt"
+        with open(new_file_path, mode = "x", encoding = "UTF-8") as file:
+            file.write(self.get_string())
+        return new_file_path
 
     def line(self, n):
         line = []

@@ -6,8 +6,8 @@ import tempfile
 
 INPUT_DIR = "/Users/anael/Movies/Films/test_in/"
 TEMP_DIR = "/Users/anael/Movies/Films/temp/"
-MOVIES_OUTPUT_DIR = "/Users/anael/Movies/Films/test_out/"
-SERIES_OUTPUT_DIR = "/Users/anael/Movies/Films/test_out/"
+MOVIES_OUTPUT_DIR = "/Users/anael/Movies/Films/out/"
+SERIES_OUTPUT_DIR = "/Users/anael/Movies/Films/out/"
 
 
 def load_and_optimize(file_path: str, output_dir: str, title: str, year: int, original_language: str, season: int | None = None, episode: int | None = None):
@@ -26,6 +26,7 @@ def load_and_optimize(file_path: str, output_dir: str, title: str, year: int, or
         movie = Movie(title, year, season, episode, original_language = original_language, temp_dir = temp_dir)
         movie.load_file(file_path)
         movie.optimize()
+        movie.make_metadata()
         movie.export(output_dir)
     except Exception as e:
         print(f"An error occurred during process: {e}")
