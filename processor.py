@@ -1,4 +1,4 @@
-from movie import Movie
+from model.movie import Movie
 import tempfile
 
 

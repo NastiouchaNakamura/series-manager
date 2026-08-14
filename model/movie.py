@@ -9,7 +9,7 @@ from track_wrappers.audio import Audio
 from track_wrappers.subtitles import Subtitles
 from track_wrappers.video import Video
 from track_wrappers.metadata import Metadata
-from codecs import VideoCodec, AudioCodec, SubtitlesCodec
+from model.codecs import VideoCodec, AudioCodec, SubtitlesCodec
 
 
 MKVTOOLS_PATH = "/Applications/MKVToolNix.app/Contents/MacOS/"
