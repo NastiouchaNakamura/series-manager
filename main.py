@@ -16,7 +16,7 @@ GREEN = "\033[0;92m"
 YELLOW = "\033[1;93m"
 BOLD = "\033[1m"
 END = "\033[0m"
-
+mkvtools_path = "/Applications/MKVToolNix.app/Contents/MacOS/"
 if __name__ == "__main__":
     try:
         # Parseur d'arguments
@@ -26,6 +26,7 @@ if __name__ == "__main__":
         parser.add_argument("--series-output", help = "Path to the series output directory", required = True)
         parser.add_argument("--temp", help = "Path to the temporary directory (in which temporary files and directories will be created)", required = False, default = ".")
         parser.add_argument("--force-av1", help = "Whether to force AV1 transcoding", choices = ("0", "1"), required = False, default = "0")
+        parser.add_argument("--mkvtools-path", help = "Path to the directory where 'mkvmerge' and 'mkvextract' executables can be found", required = False, default = "")
 
         # Récupération des répertoires
         args = parser.parse_args()
@@ -47,6 +48,7 @@ if __name__ == "__main__":
             series_output_dir += "/"
 
         force_av1 = args.force_av1 == "1"
+        mkvtools_path = args.mkvtools_path
 
         # Vérification des répertoires
         if not os.path.isdir(input_dir):
@@ -103,7 +105,7 @@ if __name__ == "__main__":
                                 continue
                             else:
                                 season_no, episode_no = map(int, finds[0])
-                                process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/", temp_dir, title, year, original_language, season_no, episode_no, force_av1 = force_av1)
+                                process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/", temp_dir, title, year, original_language, season_no, episode_no, force_av1 = force_av1, mkvtools_path = mkvtools_path)
 
             else:
                 for file_name in movies_files:
@@ -113,7 +115,7 @@ if __name__ == "__main__":
                         continue
                     else:
                         title, year, original_language = finds[0]
-                        process(f"{input_dir}{file_name}", movies_output_dir, temp_dir, title, year, original_language, None, None, force_av1 = force_av1)
+                        process(f"{input_dir}{file_name}", movies_output_dir, temp_dir, title, year, original_language, None, None, force_av1 = force_av1, mkvtools_path = mkvtools_path)
             
             sleep(5)
 

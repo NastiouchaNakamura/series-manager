@@ -12,10 +12,8 @@ from track_wrappers.metadata import Metadata
 from model.codecs import VideoCodec, AudioCodec, SubtitlesCodec
 
 
-MKVTOOLS_PATH = "/Applications/MKVToolNix.app/Contents/MacOS/"
-
 class Movie:
-    def __init__(self, title: str, year: int, season: int | None = None, episode: int | None = None, original_language: str = "UND", temp_dir: tempfile.TemporaryDirectory | None = None):
+    def __init__(self, title: str, year: int, season: int | None = None, episode: int | None = None, original_language: str = "UND", temp_dir: tempfile.TemporaryDirectory | None = None, mkvtools_path: str = ""):
         if (season is None and episode is not None) or (season is not None and episode is None):
                 raise ValueError("Season and episode must both be None or both be not None")
         
@@ -23,6 +21,7 @@ class Movie:
         self.title: str = f"{title} ({year})" if not self.is_series else f"{title} - S{season:02d}E{episode:02d}"
         self.original_language: str = original_language.upper()
         self.temp_dir: tempfile.TemporaryDirectory = tempfile.TemporaryDirectory() if temp_dir is None else temp_dir
+        self.mkvtools_path = mkvtools_path
         self.video: Video | None = None
         self.audios: list[Audio] = []
         self.subtitles: list[Subtitles] = []
@@ -158,12 +157,12 @@ class Movie:
 
     def extract_mkvtools(self, mkv_file_path: str) -> None:
         # Pré-traitement
-        mkv_file = pymkv.MKVFile(mkv_file_path, mkvmerge_path = f"{MKVTOOLS_PATH}/mkvmerge")
+        mkv_file = pymkv.MKVFile(mkv_file_path, mkvmerge_path = f"{self.mkvtools_path}mkvmerge")
 
         # Traitement
         with ProgressBar("Extracting tracks using MKVTools", len(mkv_file.tracks), "tracks") as progress_bar:
             for track in mkv_file.tracks:
-                track.mkvextract_path = (f"{MKVTOOLS_PATH}/mkvextract",)
+                track.mkvextract_path = (f"{self.mkvtools_path}mkvextract",)
                 track.compression = True
 
                 if track.track_type == "video":
@@ -211,7 +210,7 @@ class Movie:
                         source_path,
                         self.temp_dir,
                         language = track.language.upper(),
-                        language_codes = list(pymkv.Languages.language_equivalents(track.language, mkvmerge_path = (f'{MKVTOOLS_PATH}/mkvmerge',))),
+                        language_codes = list(pymkv.Languages.language_equivalents(track.language, mkvmerge_path = (f'{self.mkvtools_path}mkvmerge',))),
                         flag_default = track.default_track if track.default_track is not None else False,
                         flag_forced = False if track.track_name is None else "FORCÉ" in track.track_name.upper() or "FORCED" in track.track_name.upper(),
                         flag_hearing_impaired = track.flag_hearing_impaired if track.flag_hearing_impaired is not None else False if track.track_name is None else "CC" in track.track_name.upper() or "CLOSED CAPTIONS" in track.track_name.upper() or "SDH" in track.track_name.upper(),
@@ -279,7 +278,7 @@ class Movie:
         if not output_dir_path.endswith("/"):
             output_dir_path += "/"
 
-        mkv_file = pymkv.MKVFile(title = f"{self.title}", mkvmerge_path = f"{MKVTOOLS_PATH}/mkvmerge")
+        mkv_file = pymkv.MKVFile(title = f"{self.title}", mkvmerge_path = f"{self.mkvtools_path}mkvmerge")
 
         if self.video is None:
             raise ValueError("Need video track for export")
@@ -294,8 +293,8 @@ class Movie:
                 flag_visual_impaired = False,
                 flag_original = True,
                 compression = True,
-                mkvmerge_path = f"{MKVTOOLS_PATH}/mkvmerge",
-                mkvextract_path = f"{MKVTOOLS_PATH}/mkvextract"
+                mkvmerge_path = f"{self.mkvtools_path}mkvmerge",
+                mkvextract_path = f"{self.mkvtools_path}mkvextract"
             ))
 
         for audio in self.audios:
@@ -312,8 +311,8 @@ class Movie:
                 flag_visual_impaired = audio.flag_visual_impaired,
                 flag_original = audio.flag_original,
                 compression = True,
-                mkvmerge_path = f"{MKVTOOLS_PATH}/mkvmerge",
-                mkvextract_path = f"{MKVTOOLS_PATH}/mkvextract"
+                mkvmerge_path = f"{self.mkvtools_path}mkvmerge",
+                mkvextract_path = f"{self.mkvtools_path}mkvextract"
             ))
 
         for subtitle in self.subtitles:
@@ -331,8 +330,8 @@ class Movie:
                 flag_visual_impaired = subtitle.flag_visual_impaired,
                 flag_original = subtitle.flag_original,
                 compression = True,
-                mkvmerge_path = f"{MKVTOOLS_PATH}/mkvmerge",
-                mkvextract_path = f"{MKVTOOLS_PATH}/mkvextract"
+                mkvmerge_path = f"{self.mkvtools_path}mkvmerge",
+                mkvextract_path = f"{self.mkvtools_path}mkvextract"
             ))
 
         if self.metadata is not None:
