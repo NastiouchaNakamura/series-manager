@@ -4,7 +4,7 @@ from typing import Any, Callable
 from file_wrappers.pgs import Pgs
 from file_wrappers.ass import Ass
 from file_wrappers.tx3g import Tx3g
-from codecs import SubtitlesCodec
+from model.codecs import SubtitlesCodec
 
 
 class Subtitles:

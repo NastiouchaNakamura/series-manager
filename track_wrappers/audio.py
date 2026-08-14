@@ -1,7 +1,7 @@
 import os
 import tempfile
 from typing import Callable
-from codecs import AudioCodec
+from model.codecs import AudioCodec
 
 
 class Audio:

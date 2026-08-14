@@ -4,7 +4,7 @@ import tempfile
 import os
 from time import sleep
 from typing import Callable
-from codecs import VideoCodec
+from model.codecs import VideoCodec
 
 
 class Video:
