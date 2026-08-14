@@ -40,15 +40,13 @@ class Video:
         self.metric = (self.size / 1e9) / (self.duration / 3600) # Métrique en Go/h (Gigaocter par heure), plus c'est bas, plus c'est compressé
 
     def should_be_optimized(self) -> bool:
-        return self.metric < 1.2
-
-
+        return self.metric > 1.2
 
     def optimize(self, increment_progress_bar: Callable[[], None]) -> None:
         if not self.should_be_optimized() or self.codec is VideoCodec.AV1:
             increment_progress_bar()
             return
-        elif self.codec is VideoCodec.H264:
+        elif self.codec in [VideoCodec.H264, VideoCodec.H265]:
             # Correction du chemin
             # Obligé de transcoder en MKV H265, et pas en H265 direct, pour éviter les bugs (frames manquantes, audio désynchronisé, etc…)
             mkv_file_path = f"{self.temp_dir.name}/{id(self)}_h265.mkv"
@@ -97,7 +95,7 @@ class Video:
     def get_optimization_steps(self) -> int:
         if not self.should_be_optimized() or self.codec is VideoCodec.AV1:
             return 1
-        elif self.codec is VideoCodec.H264:
+        elif self.codec in [VideoCodec.H264, VideoCodec.H265]:
             # 1 étape = 1 seconde de vidéo
             return int(self.duration)
         else:
