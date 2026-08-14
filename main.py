@@ -26,6 +26,7 @@ if __name__ == "__main__":
         parser.add_argument("--movies-output", help = "Path to the movie output directory", required = True)
         parser.add_argument("--series-output", help = "Path to the series output directory", required = True)
         parser.add_argument("--temp", help = "Path to the temporary directory (in which temporary files and directories will be created)", required = False, default = ".")
+        parser.add_argument("--force-av1", help = "Whether to force AV1 transcoding", choices = (0, 1), required = False, default = "0")
 
         # Récupération des répertoires
         args = parser.parse_args()
@@ -45,6 +46,8 @@ if __name__ == "__main__":
         series_output_dir: str = args.series_output
         if not series_output_dir.endswith("/"):
             series_output_dir += "/"
+
+        force_av1 = args.force_av1 == "1"
 
         # Vérification des répertoires
         if not os.path.isdir(input_dir):
@@ -101,7 +104,7 @@ if __name__ == "__main__":
                                 continue
                             else:
                                 season_no, episode_no = map(int, finds[0])
-                                process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/", temp_dir, title, year, original_language, season_no, episode_no)
+                                process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/", temp_dir, title, year, original_language, season_no, episode_no, force_av1 = force_av1)
 
             else:
                 for file_name in movies_files:
@@ -111,7 +114,7 @@ if __name__ == "__main__":
                         continue
                     else:
                         title, year, original_language = finds[0]
-                        process(f"{input_dir}{file_name}", movies_output_dir, temp_dir, title, year, original_language, None, None)
+                        process(f"{input_dir}{file_name}", movies_output_dir, temp_dir, title, year, original_language, None, None, force_av1 = force_av1)
             
             sleep(5)
 

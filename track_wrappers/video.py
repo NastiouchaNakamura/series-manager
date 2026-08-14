@@ -47,61 +47,66 @@ class Video:
         # sources disponibles, c'est rare.
         return self.metric > 1.2
 
-    def optimize(self, increment_progress_bar: Callable[[], None]) -> None:
-        if not self.should_be_optimized() or self.codec is VideoCodec.AV1:
+    def optimize(self, increment_progress_bar: Callable[[], None], force_av1: bool = False) -> None:
+        if self.codec is VideoCodec.AV1:
             increment_progress_bar()
             return
-        elif self.codec in [VideoCodec.H264, VideoCodec.H265]:
-            # Correction du chemin
-            # Obligé de transcoder en MKV H265, et pas en H265 direct, pour éviter les bugs (frames manquantes, audio désynchronisé, etc…)
-            mkv_file_path = f"{self.temp_dir.name}/{id(self)}_h265.mkv"
-
-            # Pour une compression en H.265 (outdated) :
-            # https://scottstuff.net/posts/2025/03/17/benchmarking-ffmpeg-h265/
-            #proc = subprocess.Popen(["ffmpeg", "-i", self.file_path, "-codec:v", "libx265", "-crf", "20.6", "-tune", "fastdecode", "-preset", "slow", mkv_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
-            
-            # Pour une compression en AV1 (à jour) :
-            # https://www.reddit.com/r/ffmpeg/comments/1d0ci91/comment/l5m8322/?context=3
-            proc = subprocess.Popen(["ffmpeg", "-i", self.file_path, "-codec:v", "libsvtav1", "-crf", "30", "-preset", "4", "-g", "240", "-pix_fmt", "yuv420p10le", "-svtav1-params", "tune=0", mkv_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
-
-            if proc.stderr is None:
-                raise ValueError("Popen process stderr is None")
-    
-            # Pour la barre de progression
-            line = b""
-            previously_transcoded_seconds = 0
-            total_seconds_to_transcode = self.get_optimization_steps()
-            while proc.poll() is None:
-                next_b = proc.stderr.read(1)
-                if next_b == b"\r":
-                    finds = re.findall(r"time= ?(\d\d):(\d\d):(\d\d).\d\d", line.decode("utf-8"))
-                    if len(finds) == 0:
-                        continue
-                    transcoded_seconds = int(finds[0][0]) * 3600 + int(finds[0][1]) * 60 + int(float(f"{finds[0][2]}"))
-                    for _ in range(transcoded_seconds - previously_transcoded_seconds):
-                        increment_progress_bar()
-                    previously_transcoded_seconds = transcoded_seconds
-                    line = b""
-                    sleep(0.5)
-                else:
-                    line += next_b
-            
-            for _ in range(total_seconds_to_transcode - previously_transcoded_seconds):
-                increment_progress_bar()
-
-            proc.wait()
-    
-            # Mise à jour des champs
-            self.file_path = mkv_file_path
-            self.codec = VideoCodec.H265
+        elif (force_av1 or self.should_be_optimized()) and self.codec in [VideoCodec.H264, VideoCodec.H265]:
+            self.transcode_to_av1(increment_progress_bar)
+            return
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
 
-    def get_optimization_steps(self) -> int:
-        if not self.should_be_optimized() or self.codec is VideoCodec.AV1:
+    def get_optimization_steps(self, force_av1: bool = False) -> int:
+        if self.codec is VideoCodec.AV1:
             return 1
-        elif self.codec in [VideoCodec.H264, VideoCodec.H265]:
+        elif (force_av1 or self.should_be_optimized()) and self.codec in [VideoCodec.H264, VideoCodec.H265]:
             # 1 étape = 1 seconde de vidéo
             return int(self.duration)
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
+
+    def transcode_to_av1(self, increment_progress_bar: Callable[[], None]) -> None:
+        # Correction du chemin
+        # Obligé de transcoder en MKV H265, et pas en H265 direct, pour éviter les bugs (frames manquantes, audio désynchronisé, etc…)
+        opt_file_path = f"{self.temp_dir.name}/{id(self)}_opt.mkv"
+
+        # Pour une compression en H.265 (outdated) :
+        # https://scottstuff.net/posts/2025/03/17/benchmarking-ffmpeg-h265/
+        #proc = subprocess.Popen(["ffmpeg", "-i", self.file_path, "-codec:v", "libx265", "-crf", "20.6", "-tune", "fastdecode", "-preset", "slow", mkv_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
+        
+        # Pour une compression en AV1 (à jour) :
+        # https://www.reddit.com/r/ffmpeg/comments/1d0ci91/comment/l5m8322/?context=3
+        proc = subprocess.Popen(["ffmpeg", "-i", self.file_path, "-codec:v", "libsvtav1", "-crf", "30", "-preset", "4", "-g", "240", "-pix_fmt", "yuv420p10le", "-svtav1-params", "tune=0", opt_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
+
+        if proc.stderr is None:
+            raise ValueError("Popen process stderr is None")
+
+        # Pour la barre de progression
+        line = b""
+        previously_transcoded_seconds = 0
+        total_seconds_to_transcode = self.get_optimization_steps()
+        while proc.poll() is None:
+            next_b = proc.stderr.read(1)
+            if next_b == b"\r":
+                finds = re.findall(r"time= ?(\d\d):(\d\d):(\d\d).\d\d", line.decode("utf-8"))
+                if len(finds) == 0:
+                    continue
+                transcoded_seconds = int(finds[0][0]) * 3600 + int(finds[0][1]) * 60 + int(float(f"{finds[0][2]}"))
+                for _ in range(transcoded_seconds - previously_transcoded_seconds):
+                    increment_progress_bar()
+                previously_transcoded_seconds = transcoded_seconds
+                line = b""
+                sleep(0.5)
+            else:
+                line += next_b
+        
+        for _ in range(total_seconds_to_transcode - previously_transcoded_seconds):
+            increment_progress_bar()
+
+        proc.wait()
+
+        # Mise à jour des champs
+        self.file_path = opt_file_path
+        self.codec = VideoCodec.AV1
+        self.fetch_infos()

@@ -2,7 +2,7 @@ from model.movie import Movie
 import tempfile
 
 
-def process(file_path: str, output_dir: str, temp_dir: str, title: str, year: int, original_language: str, season: int | None = None, episode: int | None = None) -> None:
+def process(file_path: str, output_dir: str, temp_dir: str, title: str, year: int, original_language: str, season: int | None = None, episode: int | None = None, force_av1: bool = False) -> None:
     # Affichage
     print(f"\n -- {title} ({year}){f' S{season:02d}E{episode:02d}' if season is not None and episode is not None else ''} -- ")
 
@@ -17,7 +17,7 @@ def process(file_path: str, output_dir: str, temp_dir: str, title: str, year: in
     try:
         movie = Movie(title, year, season, episode, original_language = original_language, temp_dir = sub_temp_dir)
         movie.load_file(file_path)
-        movie.optimize()
+        movie.optimize(force_av1 = force_av1)
         movie.make_metadata()
         movie.export(output_dir)
     except Exception as e:

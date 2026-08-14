@@ -228,12 +228,12 @@ class Movie:
         mkv_file.cleanup()
 
 
-    def optimize(self) -> None:
+    def optimize(self, force_av1: bool = False) -> None:
         # Video
         if self.video is not None:
             total_steps = self.video.get_optimization_steps()
             with ProgressBar(desc = "Optimizing video track", total = total_steps, unit = "steps") as progress_bar:
-                self.video.optimize(increment_progress_bar = progress_bar.increment)
+                self.video.optimize(increment_progress_bar = progress_bar.increment, force_av1 = force_av1)
 
         # Audio
         total_steps = sum(audio.get_optimization_steps() for audio in self.audios)
