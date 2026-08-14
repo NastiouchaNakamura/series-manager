@@ -230,7 +230,7 @@ class Movie:
     def optimize(self, force_av1: bool = False) -> None:
         # Video
         if self.video is not None:
-            total_steps = self.video.get_optimization_steps()
+            total_steps = self.video.get_optimization_steps(force_av1 = force_av1)
             with ProgressBar(desc = "Optimizing video track", total = total_steps, unit = "steps") as progress_bar:
                 self.video.optimize(increment_progress_bar = progress_bar.increment, force_av1 = force_av1)
 
