@@ -12,10 +12,12 @@ class Video:
         self.codec: VideoCodec = codec
         self.file_path: str = file_path
         self.temp_dir: tempfile.TemporaryDirectory = temp_dir
-
-        self.size = os.path.getsize(self.file_path)
-        self.width = int(subprocess.run(["ffprobe", "-v", "error", "-of", "default=noprint_wrappers=1:nokey=1", "-select_streams", "v:0", "-show_entries", "stream=width", self.file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
-        self.height = int(subprocess.run(["ffprobe", "-v", "error", "-of", "default=noprint_wrappers=1:nokey=1", "-select_streams", "v:0", "-show_entries", "stream=height", self.file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
+        self.size: int
+        self.duration: float
+        self.metric: float
+        self.fetch_infos()
+        self.width = int(subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width", "-of", "default=noprint_wrappers=1:nokey=1", self.file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
+        self.height = int(subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=height", "-of", "default=noprint_wrappers=1:nokey=1", self.file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
         if self.width == 3840 or self.height == 2160:
             self.definition = "4K"
         elif self.width == 1920 or self.height == 1440:
@@ -31,16 +33,34 @@ class Video:
         else:
             self.definition = f"{self.width}x{self.height}"
 
+
+    def fetch_infos(self) -> None:
+        self.size = os.path.getsize(self.file_path)
+        self.duration = float(subprocess.run(['ffprobe', "-v", "error", "-select_streams", "v:0", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", self.file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
+        self.metric = (self.size / 1e9) / (self.duration / 3600) # Métrique en Go/h (Gigaocter par heure), plus c'est bas, plus c'est compressé
+
+    def should_be_optimized(self) -> bool:
+        return self.metric < 1.2
+
+
+
     def optimize(self, increment_progress_bar: Callable[[], None]) -> None:
-        if self.codec is VideoCodec.H265:
+        if not self.should_be_optimized() or self.codec is VideoCodec.AV1:
             increment_progress_bar()
             return
         elif self.codec is VideoCodec.H264:
             # Correction du chemin
             # Obligé de transcoder en MKV H265, et pas en H265 direct, pour éviter les bugs (frames manquantes, audio désynchronisé, etc…)
             mkv_file_path = f"{self.temp_dir.name}/{id(self)}_h265.mkv"
+
+            # Pour une compression en H.265 (outdated) :
             # https://scottstuff.net/posts/2025/03/17/benchmarking-ffmpeg-h265/
-            proc = subprocess.Popen(["ffmpeg", "-i", self.file_path, "-codec:v", "libx265", "-crf", "20.6", "-tune", "fastdecode", "-preset", "slow", mkv_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
+            #proc = subprocess.Popen(["ffmpeg", "-i", self.file_path, "-codec:v", "libx265", "-crf", "20.6", "-tune", "fastdecode", "-preset", "slow", mkv_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
+            
+            # Pour une compression en AV1 (à jour) :
+            # https://www.reddit.com/r/ffmpeg/comments/1d0ci91/comment/l5m8322/?context=3
+            proc = subprocess.Popen(["ffmpeg", "-i", self.file_path, "-codec:v", "libsvtav1", "-crf", "30", "-preset", "4", "-g", "240", "-pix_fmt", "yuv420p10le", "-svtav1-params", "tune=0", mkv_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
+
             if proc.stderr is None:
                 raise ValueError("Popen process stderr is None")
     
@@ -75,11 +95,10 @@ class Video:
             raise ValueError(f"Codec '{self.codec}' unsupported")
 
     def get_optimization_steps(self) -> int:
-        if self.codec is VideoCodec.H265:
+        if not self.should_be_optimized() or self.codec is VideoCodec.AV1:
             return 1
         elif self.codec is VideoCodec.H264:
             # 1 étape = 1 seconde de vidéo
-            proc = subprocess.run(['ffprobe', "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", self.file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            return int(float(proc.stdout))
+            return int(self.duration)
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")

@@ -101,8 +101,9 @@ class Movie:
 
                 if type == "video":
                     codec = VideoCodec.by_name(codec_name)
-                    if codec == VideoCodec.H265:
-                        # Si la vidéo est déjà en H.265, alors il est possible de l'extraire en standalone
+                    if codec is VideoCodec.H265:
+                        # Si la vidéo est en H.265, alors il est possible de
+                        # l'extraire en standalone (économie de place)
                         h265_path = f"{self.temp_dir.name}/{id(self)}_{index}{codec.file_extension}"
                         subprocess.run(["ffmpeg", "-i", file_path, "-map", f"0:{index}", "-c", codec.ffmpeg_encoder if codec.ffmpeg_encoder is not None else "copy", h265_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         self.video = Video(codec, h265_path, self.temp_dir)
@@ -170,8 +171,9 @@ class Movie:
                     if track.track_codec is None:
                         raise ValueError("Video track codec is None")
                     codec = VideoCodec.by_name(track.track_codec)
-                    if codec == VideoCodec.H265:
-                        # Si la vidéo est déjà en H.265, alors il est possible de l'extraire en standalone
+                    if codec is VideoCodec.H265:
+                        # Si la vidéo est en H.265, alors il est possible de
+                        # l'extraire en standalone (économie de place)
                         h265_path = track.extract(f"{self.temp_dir.name}", silent = True)
                         self.video = Video(codec, h265_path, self.temp_dir)
                     else:

@@ -4,10 +4,10 @@ from optimizatron.movie import Movie
 import tempfile
 
 
-INPUT_DIR = "/Volumes/videos/Unformated/Export Ready/"
+INPUT_DIR = "/Users/anael/Movies/Films/test_in/"
 TEMP_DIR = "/Users/anael/Movies/Films/temp/"
-MOVIES_OUTPUT_DIR = "/Volumes/videos/Movies/"
-SERIES_OUTPUT_DIR = "/Volumes/videos/Series/"
+MOVIES_OUTPUT_DIR = "/Users/anael/Movies/Films/test_out/"
+SERIES_OUTPUT_DIR = "/Users/anael/Movies/Films/test_out/"
 
 
 def load_and_optimize(file_path: str, output_dir: str, title: str, year: int, original_language: str, season: int | None = None, episode: int | None = None):
