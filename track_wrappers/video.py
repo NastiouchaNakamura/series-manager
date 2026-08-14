@@ -50,19 +50,38 @@ class Video:
     def optimize(self, increment_progress_bar: Callable[[], None], force_av1: bool = False) -> None:
         if self.codec is VideoCodec.AV1:
             increment_progress_bar()
-            return
-        elif (force_av1 or self.should_be_optimized()) and self.codec in [VideoCodec.H264, VideoCodec.H265]:
-            self.transcode_to_av1(increment_progress_bar)
-            return
+
+        elif self.codec is VideoCodec.H265:
+            if force_av1 or self.should_be_optimized():
+                self.transcode_to_av1(increment_progress_bar)
+            else:
+                increment_progress_bar()
+
+        elif self.codec is VideoCodec.H264:
+            if force_av1 or self.should_be_optimized():
+                self.transcode_to_av1(increment_progress_bar)
+            else:
+                increment_progress_bar()
+        
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
 
     def get_optimization_steps(self, force_av1: bool = False) -> int:
         if self.codec is VideoCodec.AV1:
             return 1
-        elif (force_av1 or self.should_be_optimized()) and self.codec in [VideoCodec.H264, VideoCodec.H265]:
-            # 1 étape = 1 seconde de vidéo
-            return int(self.duration)
+
+        elif self.codec is VideoCodec.H265:
+            if force_av1 or self.should_be_optimized():
+                return int(self.duration)
+            else:
+                return 1
+
+        elif self.codec is VideoCodec.H264:
+            if force_av1 or self.should_be_optimized():
+                return int(self.duration)
+            else:
+                return 1
+        
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
 
