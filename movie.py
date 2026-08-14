@@ -5,11 +5,11 @@ import pymkv
 import tempfile
 from tqdm import tqdm
 from time import time
-from optimizatron.track_wrappers.audio import Audio
-from optimizatron.track_wrappers.subtitles import Subtitles
-from optimizatron.track_wrappers.video import Video
-from optimizatron.track_wrappers.metadata import Metadata
-from optimizatron.codecs import VideoCodec, AudioCodec, SubtitlesCodec
+from track_wrappers.audio import Audio
+from track_wrappers.subtitles import Subtitles
+from track_wrappers.video import Video
+from track_wrappers.metadata import Metadata
+from codecs import VideoCodec, AudioCodec, SubtitlesCodec
 
 
 MKVTOOLS_PATH = "/Applications/MKVToolNix.app/Contents/MacOS/"

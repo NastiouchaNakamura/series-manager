@@ -1,10 +1,10 @@
 import os
 import tempfile
 from typing import Any, Callable
-from optimizatron.file_wrappers.pgs import Pgs
-from optimizatron.file_wrappers.ass import Ass
-from optimizatron.file_wrappers.tx3g import Tx3g
-from optimizatron.codecs import SubtitlesCodec
+from file_wrappers.pgs import Pgs
+from file_wrappers.ass import Ass
+from file_wrappers.tx3g import Tx3g
+from codecs import SubtitlesCodec
 
 
 class Subtitles:

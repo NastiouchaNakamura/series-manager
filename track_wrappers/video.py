@@ -4,7 +4,7 @@ import tempfile
 import os
 from time import sleep
 from typing import Callable
-from optimizatron.codecs import VideoCodec
+from codecs import VideoCodec
 
 
 class Video:
@@ -40,6 +40,11 @@ class Video:
         self.metric = (self.size / 1e9) / (self.duration / 3600) # Métrique en Go/h (Gigaocter par heure), plus c'est bas, plus c'est compressé
 
     def should_be_optimized(self) -> bool:
+        # Modifier ici pour forcer la conversion sous d'autres conditions.
+        # 1.2 Go/h est normalement supérieur à la métrique d'un fichier AV1
+        # (en résolution 1080p ou inférieur). Un fichier H265 ou même H264 peut
+        # être inférieur s'il est très compressé en amont, mais parmi les
+        # sources disponibles, c'est rare.
         return self.metric > 1.2
 
     def optimize(self, increment_progress_bar: Callable[[], None]) -> None:
