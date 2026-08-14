@@ -1,5 +1,4 @@
 import re
-import tempfile
 import os
 import argparse
 from time import sleep
@@ -26,7 +25,7 @@ if __name__ == "__main__":
         parser.add_argument("--movies-output", help = "Path to the movie output directory", required = True)
         parser.add_argument("--series-output", help = "Path to the series output directory", required = True)
         parser.add_argument("--temp", help = "Path to the temporary directory (in which temporary files and directories will be created)", required = False, default = ".")
-        parser.add_argument("--force-av1", help = "Whether to force AV1 transcoding", choices = (0, 1), required = False, default = "0")
+        parser.add_argument("--force-av1", help = "Whether to force AV1 transcoding", choices = ("0", "1"), required = False, default = "0")
 
         # Récupération des répertoires
         args = parser.parse_args()
