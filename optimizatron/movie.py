@@ -269,7 +269,7 @@ class Movie:
             self.metadata.metadatas[f"audio_track_{i + 1}_codec"] = audio.codec.mkvtools_name
             self.metadata.metadatas[f"audio_track_{i + 1}_language"] = audio.language
 
-        self.metadata.metadatas["subtitle_track_count"] = f"{len(self.audios)}"
+        self.metadata.metadatas["subtitle_track_count"] = f"{len(self.subtitles)}"
         for i, subtitle in enumerate(self.subtitles):
             self.metadata.metadatas[f"subtitle_track_{i + 1 + len(self.audios)}_codec"] = subtitle.codec.mkvtools_name
             self.metadata.metadatas[f"subtitle_track_{i + 1 + len(self.audios)}_language"] = subtitle.language
