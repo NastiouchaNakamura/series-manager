@@ -80,7 +80,7 @@ if __name__ == "__main__":
         series_dirs = [file for file in all_files if os.path.isdir(f"{input_dir}{file}") and not file.startswith(".") and not file.startswith("DONE - ")]
         series_files = []
         for dir in series_dirs:
-            series_files.extend([file for file in os.listdir(f"{input_dir}{dir}/") if os.path.isfile(f"{input_dir}{dir}/{file}") and not file.startswith(".")])
+            series_files.extend([file for file in os.listdir(f"{input_dir}{dir}/") if os.path.isfile(f"{input_dir}{dir}/{file}") and not file.startswith(".") and not file.startswith("DONE - ")])
         print(f"Found {len(movies_files)} movie files and {len(series_files)} series files in input directory.")
     
         # Séries
@@ -96,7 +96,7 @@ if __name__ == "__main__":
                     os.mkdir(f"{series_output_dir}{title} ({year})")
         
                 # Chaque épisode
-                for file_name in sorted([file for file in os.listdir(f"{input_dir}{dir_name}/") if os.path.isfile(f"{input_dir}{dir_name}/{file}") and not file.startswith(".")]):
+                for file_name in sorted([file for file in os.listdir(f"{input_dir}{dir_name}/") if os.path.isfile(f"{input_dir}{dir_name}/{file}") and not file.startswith(".") and not file.startswith("DONE - ")]):
                     finds = re.findall(r"S(?P<season_no>\d\d)E(?P<episode_no>\d\d)", file_name)
                     if len(finds) == 0:
                         print(f"{RED}Badly named episode (can't find season and episode numbers): {file_name}{END}")
@@ -104,6 +104,7 @@ if __name__ == "__main__":
                     else:
                         season_no, episode_no = map(int, finds[0])
                         process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/", temp_dir, title, year, original_language, season_no, episode_no, force_av1 = force_av1, mkvtools_path = mkvtools_path)
+                        os.rename(f"{input_dir}{dir_name}/{file_name}", f"{input_dir}{dir_name}/DONE - {file_name}")
                 os.rename(f"{input_dir}{dir_name}", f"{input_dir}DONE - {dir_name}")
 
         # Films

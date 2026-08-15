@@ -36,11 +36,12 @@ class VideoCodec(Codec):
 
 
 class AudioCodec(Codec):
-    #       MKVTool    FFMPEG  FFMPEG   File
-    #       name       name    encoder  extension
-    AC3  = ("AC-3",    "ac3",  None,    ".ac3") # Optimized
-    AAC  = ("AAC",     "aac",  None,    ".aac") # Optimized
-    EAC3 = ("E-AC-3", "eac3",  None,    ".aac") # Optimized
+    #         MKVTool    FFMPEG    FFMPEG   File
+    #         name       name      encoder  extension
+    AAC    = ("AAC",     "aac",    None,    ".aac") # Optimized
+    AC3    = ("AC-3",    "ac3",    None,    ".ac3") # Optimized
+    EAC3   = ("E-AC-3",  "eac3",   None,    ".aac") # Optimized
+    VORBIS = ("Vorbis",  "vorbis", None,    ".ogg")
 
     @classmethod
     def by_name(cls, name) -> AudioCodec:

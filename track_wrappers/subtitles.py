@@ -22,46 +22,53 @@ class Subtitles:
         self.size = os.path.getsize(self.file_path)
         self.subfile: Any | None = None
 
-    def optimize(self, increment_progress_bar: Callable[[], None]) -> None:
+    def optimize(self, increment_progress_bar: Callable[[], None] = lambda: None) -> None:
         # step_done_callback: à appeler à chaque itération achevée (nb d'itérations donné par get_optimization_steps)
         if self.codec is SubtitlesCodec.SRT:
-            increment_progress_bar()
             return
+        
         elif self.codec is SubtitlesCodec.PGS:
             if type(self.subfile) is not Pgs:
                 self.subfile = Pgs(self.file_path, self.language_codes, self.temp_dir)
             self.file_path = self.subfile.to_srt(increment_progress_bar)
             self.codec = SubtitlesCodec.SRT
             self.subfile = None
+
         elif self.codec is SubtitlesCodec.ASS:
             if type(self.subfile) is not Ass:
                 self.subfile = Ass(self.file_path, self.temp_dir)
             self.file_path = self.subfile.to_srt(increment_progress_bar)
             self.codec = SubtitlesCodec.SRT
             self.subfile = None
+
         elif self.codec is SubtitlesCodec.TX3G:
             if type(self.subfile) is not Tx3g:
                 self.subfile = Tx3g(self.file_path, self.temp_dir)
             self.file_path = self.subfile.to_srt(increment_progress_bar)
             self.codec = SubtitlesCodec.SRT
             self.subfile = None
+
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
 
     def get_optimization_steps(self) -> int:
         if self.codec is SubtitlesCodec.SRT:
-            return 1
+            return 0
+        
         elif self.codec is SubtitlesCodec.PGS:
             if type(self.subfile) is not Pgs:
                 self.subfile = Pgs(self.file_path, self.language_codes, self.temp_dir)
             return len(self.subfile.subtitles) + len(self.subfile.subtitles[:10]) * 5
+        
         elif self.codec is SubtitlesCodec.ASS:
             if type(self.subfile) is not Ass:
                 self.subfile = Ass(self.file_path, self.temp_dir)
             return len(self.subfile.subtitles)
+        
         elif self.codec is SubtitlesCodec.TX3G:
             if type(self.subfile) is not Tx3g:
                 self.subfile = Tx3g(self.file_path, self.temp_dir)
             return len(self.subfile.subtitles)
+        
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")

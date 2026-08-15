@@ -240,6 +240,9 @@ class Movie:
             with ProgressBar(desc = "Optimizing audio tracks", total = total_steps, unit = "steps") as progress_bar:
                 for audio in self.audios:
                     audio.optimize(increment_progress_bar = progress_bar.increment)
+        else:
+            for audio in self.audios:
+                audio.optimize()
 
         # Subtitles
         total_steps = sum(subtitle.get_optimization_steps() for subtitle in self.subtitles)
@@ -247,6 +250,9 @@ class Movie:
             with ProgressBar(desc = "Optimizing subtitles tracks", total = total_steps, unit = "steps") as progress_bar:
                 for subtitle in self.subtitles:
                     subtitle.optimize(increment_progress_bar = progress_bar.increment)
+        else:
+            for subtitle in self.subtitles:
+                subtitle.optimize()
 
         self.remove_useless_tracks()
 

@@ -35,9 +35,9 @@ class Video:
 
 
     def fetch_infos(self) -> None:
-        self.size = os.path.getsize(self.file_path)
-        self.duration = float(subprocess.run(['ffprobe', "-v", "error", "-select_streams", "v:0", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", self.file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
-        self.metric = (self.size / 1e9) / (self.duration / 3600) # Métrique en Go/h (Gigaocter par heure), plus c'est bas, plus c'est compressé
+        self.size: int = os.path.getsize(self.file_path)
+        self.duration: float = float(subprocess.run(['ffprobe', "-v", "error", "-select_streams", "v:0", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", self.file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
+        self.metric: float = (self.size / 1e9) / (self.duration / 3600) # Métrique en Go/h (Gigaoctet par heure), plus c'est bas, plus c'est compressé
 
     def should_be_optimized(self) -> bool:
         # Modifier ici pour forcer la conversion sous d'autres conditions.
@@ -47,40 +47,40 @@ class Video:
         # sources disponibles, c'est rare.
         return self.metric > 1.2
 
-    def optimize(self, increment_progress_bar: Callable[[], None], force_av1: bool = False) -> None:
+    def optimize(self, increment_progress_bar: Callable[[], None] = lambda: None, force_av1: bool = False) -> None:
         if self.codec is VideoCodec.AV1:
-            increment_progress_bar()
+            return
 
         elif self.codec is VideoCodec.H265:
             if force_av1 or self.should_be_optimized():
                 self.transcode_to_av1(increment_progress_bar)
             else:
-                increment_progress_bar()
+                return
 
         elif self.codec is VideoCodec.H264:
             if force_av1 or self.should_be_optimized():
                 self.transcode_to_av1(increment_progress_bar)
             else:
-                increment_progress_bar()
+                return
         
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
 
     def get_optimization_steps(self, force_av1: bool = False) -> int:
         if self.codec is VideoCodec.AV1:
-            return 1
+            return 0
 
         elif self.codec is VideoCodec.H265:
             if force_av1 or self.should_be_optimized():
                 return int(self.duration)
             else:
-                return 1
+                return 0
 
         elif self.codec is VideoCodec.H264:
             if force_av1 or self.should_be_optimized():
                 return int(self.duration)
             else:
-                return 1
+                return 0
         
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
@@ -104,7 +104,7 @@ class Video:
         # Pour la barre de progression
         line = b""
         previously_transcoded_seconds = 0
-        total_seconds_to_transcode = self.get_optimization_steps()
+        total_seconds_to_transcode = self.get_optimization_steps(force_av1 = True)
         while proc.poll() is None:
             next_b = proc.stderr.read(1)
             if next_b == b"\r":
