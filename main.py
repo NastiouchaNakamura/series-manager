@@ -74,52 +74,49 @@ if __name__ == "__main__":
         print(f"\n{BOLD}{YELLOW} ⊹₊ ˚‧︵‿₊୨ ᰔ ୧₊‿︵‧ ˚ ₊⊹ \nNastioucha Video Transcoder\nᓚ₍ ^. ̫ .^₎{END}\n")
 
         # Exécution de la boucle principale
-        while True:
-            print(f"Scan of input directory '{input_dir}'…")
-            all_files = os.listdir(input_dir)
-            movies_files = [file for file in all_files if os.path.isfile(f"{input_dir}{file}") and not file.startswith(".") and not file.startswith("DONE - ")]
-            series_dirs = [file for file in all_files if os.path.isdir(f"{input_dir}{file}") and not file.startswith(".") and not file.startswith("DONE - ")]
-            series_files = []
-            for dir in series_dirs:
-                series_files.extend([file for file in os.listdir(f"{input_dir}{dir}/") if os.path.isfile(f"{input_dir}{dir}/{file}") and not file.startswith(".")])
-            print(f"Found {len(movies_files)} movie files and {len(series_files)} series files in input directory.")
-        
-            # Séries
-            if len(series_dirs) != 0:
-                for dir_name in series_dirs:
-                    finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", dir_name)
-                    if len(finds) == 0:
-                        print(f"{RED}Badly named series: {dir_name}{END}")
-                        continue
-                    else:
-                        title, year, original_language = finds[0]
-                
-                        if not os.path.exists(f"{series_output_dir}{title} ({year})"):
-                            os.mkdir(f"{series_output_dir}{title} ({year})")
-                
-                        # Chaque épisode
-                        for file_name in sorted([file for file in os.listdir(f"{input_dir}{dir_name}/") if os.path.isfile(f"{input_dir}{dir_name}/{file}") and not file.startswith(".")]):
-                            finds = re.findall(r"S(?P<season_no>\d\d)E(?P<episode_no>\d\d)", file_name)
-                            if len(finds) == 0:
-                                print(f"{RED}Badly named episode (can't find season and episode numbers): {file_name}{END}")
-                                continue
-                            else:
-                                season_no, episode_no = map(int, finds[0])
-                                process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/", temp_dir, title, year, original_language, season_no, episode_no, force_av1 = force_av1, mkvtools_path = mkvtools_path)
-                        os.rename(f"{input_dir}{dir_name}", f"{input_dir}DONE - {input_dir}{dir_name}")
-
+        print(f"Scan of input directory '{input_dir}'…")
+        all_files = os.listdir(input_dir)
+        movies_files = [file for file in all_files if os.path.isfile(f"{input_dir}{file}") and not file.startswith(".") and not file.startswith("DONE - ")]
+        series_dirs = [file for file in all_files if os.path.isdir(f"{input_dir}{file}") and not file.startswith(".") and not file.startswith("DONE - ")]
+        series_files = []
+        for dir in series_dirs:
+            series_files.extend([file for file in os.listdir(f"{input_dir}{dir}/") if os.path.isfile(f"{input_dir}{dir}/{file}") and not file.startswith(".")])
+        print(f"Found {len(movies_files)} movie files and {len(series_files)} series files in input directory.")
+    
+        # Séries
+        for dir_name in series_dirs:
+            finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", dir_name)
+            if len(finds) == 0:
+                print(f"{RED}Badly named series: {dir_name}{END}")
+                continue
             else:
-                for file_name in movies_files:
-                    finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", file_name)
+                title, year, original_language = finds[0]
+        
+                if not os.path.exists(f"{series_output_dir}{title} ({year})"):
+                    os.mkdir(f"{series_output_dir}{title} ({year})")
+        
+                # Chaque épisode
+                for file_name in sorted([file for file in os.listdir(f"{input_dir}{dir_name}/") if os.path.isfile(f"{input_dir}{dir_name}/{file}") and not file.startswith(".")]):
+                    finds = re.findall(r"S(?P<season_no>\d\d)E(?P<episode_no>\d\d)", file_name)
                     if len(finds) == 0:
-                        print(f"{RED}Badly named movie: {file_name}{END}")
+                        print(f"{RED}Badly named episode (can't find season and episode numbers): {file_name}{END}")
                         continue
                     else:
-                        title, year, original_language = finds[0]
-                        process(f"{input_dir}{file_name}", movies_output_dir, temp_dir, title, year, original_language, None, None, force_av1 = force_av1, mkvtools_path = mkvtools_path)
-                        os.rename(f"{input_dir}{file_name}", f"{input_dir}DONE - {input_dir}{file_name}")
-            
-            sleep(5)
+                        season_no, episode_no = map(int, finds[0])
+                        process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/", temp_dir, title, year, original_language, season_no, episode_no, force_av1 = force_av1, mkvtools_path = mkvtools_path)
+                os.rename(f"{input_dir}{dir_name}", f"{input_dir}DONE - {dir_name}")
+
+        # Films
+        for file_name in movies_files:
+            finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", file_name)
+            if len(finds) == 0:
+                print(f"{RED}Badly named movie: {file_name}{END}")
+                continue
+            else:
+                title, year, original_language = finds[0]
+                process(f"{input_dir}{file_name}", movies_output_dir, temp_dir, title, year, original_language, None, None, force_av1 = force_av1, mkvtools_path = mkvtools_path)
+                os.rename(f"{input_dir}{file_name}", f"{input_dir}DONE - {file_name}")
+
 
     except KeyboardInterrupt:
         print("Video Transcoder interrupted.")
