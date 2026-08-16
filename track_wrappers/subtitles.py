@@ -19,6 +19,7 @@ class Subtitles:
         self.flag_hearing_impaired: bool = flag_hearing_impaired
         self.flag_visual_impaired: bool = flag_visual_impaired
         self.flag_original: bool = flag_original
+        self.size = os.path.getsize(self.file_path)
         self.subfile: Any | None = None
 
     def optimize(self, increment_progress_bar: Callable[[], None] = lambda: None) -> None:
