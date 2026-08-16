@@ -56,12 +56,13 @@ class AudioCodec(Codec):
 
 
 class SubtitlesCodec(Codec):
-    #       MKVTool            FFMPEG               FFMPEG   File
-    #       name               name                 encoder  extension
-    SRT  = ("SubRip/SRT",      "srt",               None,    ".srt") # Optimized
-    PGS  = ("HDMV PGS",        "hdmv_pgs_subtitle", None,    ".pgs")
-    ASS  = ("SubStationAlpha", "ass",               None,    ".ass")
-    TX3G = ("SubRip/SRT",      "mov_text",          "srt",   ".srt")
+    #         MKVTool            FFMPEG               FFMPEG   File
+    #         name               name                 encoder  extension
+    SRT    = ("SubRip/SRT",      "srt",               None,    ".srt") # Optimized
+    PGS    = ("HDMV PGS",        "hdmv_pgs_subtitle", None,    ".pgs")
+    ASS    = ("SubStationAlpha", "ass",               None,    ".ass")
+    TX3G   = ("SubRip/SRT",      "mov_text",          "srt",   ".srt")
+    VOBSUB = ("VobSub",          "dvd_subtitle",      None,    ".idx") # Paire de fichiers .idx et .sub
 
     @classmethod
     def by_name(cls, name) -> SubtitlesCodec:

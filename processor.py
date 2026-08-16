@@ -2,7 +2,7 @@ from model.movie import Movie
 import tempfile
 
 
-def process(file_path: str, output_dir: str, temp_dir: str, title: str, year: int, original_language: str, season: int | None = None, episode: int | None = None, force_av1: bool = False, mkvtools_path: str = "") -> None:
+def process(file_path: str, output_dir: str, temp_dir: str, title: str, year: int, original_language: str, season: int | None = None, episode: int | None = None, force_av1: bool = False, mkvtools_path: str = "") -> bool:
     # Affichage
     print(f"\n -- {title} ({year}){f' S{season:02d}E{episode:02d}' if season is not None and episode is not None else ''} -- ")
 
@@ -24,6 +24,9 @@ def process(file_path: str, output_dir: str, temp_dir: str, title: str, year: in
         print(f"An error occurred during process: {e}")
         if input("Display traceback? (y/n)") == "y":
             raise e
+        else:
+            return False
 
     # Suppression du dossier temporaire
     sub_temp_dir.cleanup()
+    return True

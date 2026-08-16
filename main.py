@@ -97,6 +97,7 @@ if __name__ == "__main__":
                     os.mkdir(f"{series_output_dir}{title} ({year})")
         
                 # Chaque épisode
+                success_for_all = True
                 for file_name in sorted([file for file in os.listdir(f"{input_dir}{dir_name}/") if os.path.isfile(f"{input_dir}{dir_name}/{file}") and not file.startswith(".") and not file.startswith("DONE - ")]):
                     finds = re.findall(r"S(?P<season_no>\d\d)E(?P<episode_no>\d\d)", file_name)
                     if len(finds) == 0:
@@ -104,9 +105,13 @@ if __name__ == "__main__":
                         continue
                     else:
                         season_no, episode_no = map(int, finds[0])
-                        process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/", temp_dir, title, year, original_language, season_no, episode_no, force_av1 = force_av1, mkvtools_path = mkvtools_path)
-                        os.rename(f"{input_dir}{dir_name}/{file_name}", f"{input_dir}{dir_name}/DONE - {file_name}")
-                os.rename(f"{input_dir}{dir_name}", f"{input_dir}DONE - {dir_name}")
+                        success = process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/", temp_dir, title, year, original_language, season_no, episode_no, force_av1 = force_av1, mkvtools_path = mkvtools_path)
+                        if success:
+                            os.rename(f"{input_dir}{dir_name}/{file_name}", f"{input_dir}{dir_name}/DONE - {file_name}")
+                        else:
+                            success_for_all = False
+                if success_for_all:
+                    os.rename(f"{input_dir}{dir_name}", f"{input_dir}DONE - {dir_name}")
 
         # Films
         for file_name in movies_files:
@@ -116,8 +121,9 @@ if __name__ == "__main__":
                 continue
             else:
                 title, year, original_language = finds[0]
-                process(f"{input_dir}{file_name}", movies_output_dir, temp_dir, title, year, original_language, None, None, force_av1 = force_av1, mkvtools_path = mkvtools_path)
-                os.rename(f"{input_dir}{file_name}", f"{input_dir}DONE - {file_name}")
+                success = process(f"{input_dir}{file_name}", movies_output_dir, temp_dir, title, year, original_language, None, None, force_av1 = force_av1, mkvtools_path = mkvtools_path)
+                if success:
+                    os.rename(f"{input_dir}{file_name}", f"{input_dir}DONE - {file_name}")
 
 
     except KeyboardInterrupt:

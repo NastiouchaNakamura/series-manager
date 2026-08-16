@@ -107,6 +107,7 @@ if __name__ == "__main__":
                     print(f"Boss sent an unrecognized message: {request}")
                     boss_socket.send(b"STATUS\nDID NOT UNDERSTAND")
 
+
     except KeyboardInterrupt:
         worker_socket.close()
         if boss_socket is not None:

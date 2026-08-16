@@ -4,6 +4,7 @@ from typing import Any, Callable
 from file_wrappers.pgs import Pgs
 from file_wrappers.ass import Ass
 from file_wrappers.tx3g import Tx3g
+from file_wrappers.vobsub import VobSub
 from model.codecs import SubtitlesCodec
 
 
@@ -48,6 +49,15 @@ class Subtitles:
             self.codec = SubtitlesCodec.SRT
             self.subfile = None
 
+        elif self.codec is SubtitlesCodec.VOBSUB:
+            if type(self.subfile) is not VobSub:
+                idx_file_path = f"{self.file_path[:-4]}.idx"
+                sub_file_path = self.file_path
+                self.subfile = VobSub(idx_file_path, sub_file_path, self.language_codes, self.temp_dir)
+            self.file_path = self.subfile.to_srt(increment_progress_bar)
+            self.codec = SubtitlesCodec.SRT
+            self.subfile = None
+
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
 
@@ -68,6 +78,13 @@ class Subtitles:
         elif self.codec is SubtitlesCodec.TX3G:
             if type(self.subfile) is not Tx3g:
                 self.subfile = Tx3g(self.file_path, self.temp_dir)
+            return len(self.subfile.subtitles)
+
+        elif self.codec is SubtitlesCodec.VOBSUB:
+            if type(self.subfile) is not VobSub:
+                idx_file_path = f"{self.file_path[:-4]}.idx"
+                sub_file_path = self.file_path
+                self.subfile = VobSub(idx_file_path, sub_file_path, self.language_codes, self.temp_dir)
             return len(self.subfile.subtitles)
         
         else:
