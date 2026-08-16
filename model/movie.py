@@ -206,12 +206,6 @@ class Movie:
                         raise ValueError("Subtitles track has no language")
                     codec = SubtitlesCodec.by_name(track.track_codec)
                     source_path = track.extract(f"{self.temp_dir.name}", silent = True)
-                    if codec is SubtitlesCodec.VOBSUB:
-                        # Dans ce cas il y a 2 fichiers générés : '{title}.idx' et '{title}.sub'.
-                        # S'il y a plusieurs tracks de DVDSUB, très probablement qu'ils se remplacent les uns les autres…
-                        path_to_file, fake_file = os.path.split(source_path)
-                        fake_file_name, extension = os.path.splitext(fake_file)
-                        source_path = f"{path_to_file}/{fake_file_name}.sub"
                     self.subtitles.append(Subtitles(
                         SubtitlesCodec.by_name(track.track_codec),
                         source_path,
@@ -236,13 +230,13 @@ class Movie:
 
     def optimize(self, force_av1: bool = False) -> None:
         # Video
-        # if self.video is not None:
-        #     total_steps = self.video.get_optimization_steps(force_av1 = force_av1)
-        #     if total_steps != 0:
-        #         with ProgressBar(desc = "Optimizing video track", total = total_steps, unit = "steps") as progress_bar:
-        #             self.video.optimize(increment_progress_bar = progress_bar.increment, force_av1 = force_av1)
-        #     else:
-        #         self.video.optimize(force_av1 = force_av1)
+        if self.video is not None:
+            total_steps = self.video.get_optimization_steps(force_av1 = force_av1)
+            if total_steps != 0:
+                with ProgressBar(desc = "Optimizing video track", total = total_steps, unit = "steps") as progress_bar:
+                    self.video.optimize(increment_progress_bar = progress_bar.increment, force_av1 = force_av1)
+            else:
+                self.video.optimize(force_av1 = force_av1)
 
         # Audio
         total_steps = sum(audio.get_optimization_steps() for audio in self.audios)

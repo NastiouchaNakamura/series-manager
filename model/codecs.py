@@ -62,7 +62,7 @@ class SubtitlesCodec(Codec):
     PGS    = ("HDMV PGS",        "hdmv_pgs_subtitle", None,    ".pgs")
     ASS    = ("SubStationAlpha", "ass",               None,    ".ass")
     TX3G   = ("SubRip/SRT",      "mov_text",          "srt",   ".srt")
-    VOBSUB = ("VobSub",          "dvd_subtitle",      None,    ".idx") # Paire de fichiers .idx et .sub
+    #VOBSUB = ("VobSub",          "dvd_subtitle",      None,    ".idx")* # Paire de fichiers .idx et .sub, MKVTools le prend très mal en charge car 2 fichiers
 
     @classmethod
     def by_name(cls, name) -> SubtitlesCodec:
@@ -73,3 +73,12 @@ class SubtitlesCodec(Codec):
             if codec.ffmpeg_name == name:
                 return codec
         raise ValueError(f"Unrecognized codec name: {name}")
+
+# *VobSub : PAS PRIS EN CHARGE car STANDARD INTROUVABLE
+# TODO: Prendre en charge les VobSub (un jour bien motivé)
+# https://wiki.multimedia.cx/index.php?title=VOBsub
+# https://www.loc.gov/preservation/digital/formats/fdd/fdd000571.shtml
+# https://en.wikipedia.org/wiki/Packetized_elementary_stream
+# https://dvd.sourceforge.net/dvdinfo/pes-hdr.html
+# https://www.bretl.com/mpeghtml/pespckt.HTM
+# https://github.com/wireshark/wireshark/blob/master/epan/dissectors/asn1/mpeg-pes/packet-mpeg-pes-template.c
