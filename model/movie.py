@@ -231,8 +231,11 @@ class Movie:
         # Video
         if self.video is not None:
             total_steps = self.video.get_optimization_steps(force_av1 = force_av1)
-            with ProgressBar(desc = "Optimizing video track", total = total_steps, unit = "steps") as progress_bar:
-                self.video.optimize(increment_progress_bar = progress_bar.increment, force_av1 = force_av1)
+            if total_steps != 0:
+                with ProgressBar(desc = "Optimizing video track", total = total_steps, unit = "steps") as progress_bar:
+                    self.video.optimize(increment_progress_bar = progress_bar.increment, force_av1 = force_av1)
+            else:
+                self.video.optimize(force_av1 = force_av1)
 
         # Audio
         total_steps = sum(audio.get_optimization_steps() for audio in self.audios)
