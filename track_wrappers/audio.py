@@ -22,7 +22,19 @@ class Audio:
 
     def fetch_infos(self) -> None:
         self.size: int = os.path.getsize(self.file_path)
-        self.duration: float = float(subprocess.run(['ffprobe', "-v", "error", "-select_streams", "a:0", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", self.file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
+        duration_output = subprocess.run(['ffprobe', "-v", "error", "-select_streams", "a:0", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", self.file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout
+        if duration_output != b"N/A\n":
+            self.duration: float = float(duration_output)
+        elif self.codec is AudioCodec.FLAC:
+            # À l'extraction par mkvextract l'en-tête FLAC peut être endomagé
+            # Donc on réencode en FLAC, ça a aucune incidence sur les données
+            # comme c'est pas lossy.
+            # https://stackoverflow.com/questions/60653531/ffmpeg-flac-audio-file-duration-in-metadata-is-0
+            remade_file_path = f"{self.file_path[:-5]}_remade.flac"
+            subprocess.run(["ffmpeg", "-i", self.file_path, "-codec:a", "flac", remade_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
+            os.remove(self.file_path)
+            self.file_path = remade_file_path
+            self.duration: float = float(subprocess.run(['ffprobe', "-v", "error", "-select_streams", "a:0", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", self.file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
 
     def optimize(self, increment_progress_bar: Callable[[], None] = lambda: None) -> None:
         if self.codec is AudioCodec.AAC:

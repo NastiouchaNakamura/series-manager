@@ -42,7 +42,7 @@ class AudioCodec(Codec):
     AC3    = ("AC-3",    "ac3",    None,    ".ac3") # Optimized
     EAC3   = ("E-AC-3",  "eac3",   None,    ".aac") # Optimized
     VORBIS = ("Vorbis",  "vorbis", None,    ".ogg")
-    FLAC   = ("FLAC",    "flac",   None,    ".ogg")
+    FLAC   = ("FLAC",    "flac",   None,    ".flac")
 
     @classmethod
     def by_name(cls, name) -> AudioCodec:
