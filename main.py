@@ -15,7 +15,9 @@ GREEN = "\033[0;92m"
 YELLOW = "\033[1;93m"
 BOLD = "\033[1m"
 END = "\033[0m"
+
 mkvtools_path = "/Applications/MKVToolNix.app/Contents/MacOS/"
+
 if __name__ == "__main__":
     try:
         # Parseur d'arguments
@@ -27,7 +29,7 @@ if __name__ == "__main__":
         parser.add_argument("--force-av1", help = "Whether to force AV1 transcoding", choices = ("0", "1"), required = False, default = "0")
         parser.add_argument("--mkvtools-path", help = "Path to the directory where 'mkvmerge' and 'mkvextract' executables can be found", required = False, default = "")
 
-        # Récupération des répertoires
+        # Récupération des arguments
         args = parser.parse_args()
 
         input_dir: str = args.input
