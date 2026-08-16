@@ -1,5 +1,4 @@
 import socket
-import re
 import os
 import argparse
 from threading import Thread
@@ -114,4 +113,3 @@ if __name__ == "__main__":
             print(f"Forcefully closed connection from boss at {boss_address}")
             boss_socket.close()
         print("Video Transcoder Worker interrupted.")
-
