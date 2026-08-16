@@ -1,7 +1,6 @@
 import re
 import os
 import argparse
-from time import sleep
 from processor import process
 
 
