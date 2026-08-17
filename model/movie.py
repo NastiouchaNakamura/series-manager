@@ -293,7 +293,17 @@ class Movie:
         if self.video is None:
             raise ValueError("Need video track for export")
         else:
+            if self.video.file_path.endswith(".mkv"):
+                # Trouver la piste vidéo
+                source_mkv_file = pymkv.MKVFile(self.video.file_path, mkvmerge_path = f"{self.mkvtools_path}mkvmerge")
+                video_track = list(filter(lambda t: t.track_type == "video", source_mkv_file.tracks))[0]
+                video_track_id = video_track.track_id
+                source_mkv_file.cleanup()
+            else:
+                video_track_id = 0
+            
             mkv_file.add_track(pymkv.MKVTrack(
+                track_id = video_track_id,
                 track_name = f"{self.video.definition} - {self.video.codec.mkvtools_name}",
                 file_path = self.video.file_path,
                 language = "UND",
