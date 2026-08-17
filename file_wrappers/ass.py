@@ -1,3 +1,4 @@
+import re
 import tempfile
 from typing import Callable
 import datetime as dt
@@ -57,15 +58,23 @@ class Ass:
                             fields = line[10:].strip().split(",")
                             startHours, startMinutes, startSeconds = fields[startIndex].split(":")
                             endHours, endMinutes, endSeconds = fields[endIndex].split(":")
-                            text = fields[textIndex]
-                            self.subtitles.append(Subtitle(
-                                dt.timedelta(hours = int(startHours), minutes = int(startMinutes), seconds = float(startSeconds)),
-                                dt.timedelta(hours = int(endHours), minutes = int(endMinutes), seconds = float(endSeconds)),
-                                text
-                            ))
+                            if textIndex == len(fields) - 1:
+                                text = "".join(fields[textIndex:])
+                            else:
+                                text = fields[textIndex]
+                            text = re.sub(r"\\N ?", "\n", text) # Réajouter les sauts de ligne les sauts de ligne
+                            text = re.sub(r"{\\.*?}", "", text) # Supprimer les surlignages de mots (souvent dans les openings d'animes) et autres mises en forme superflues
+                            if text.strip() != "":
+                                self.subtitles.append(Subtitle(
+                                    dt.timedelta(hours = int(startHours), minutes = int(startMinutes), seconds = float(startSeconds)),
+                                    dt.timedelta(hours = int(endHours), minutes = int(endMinutes), seconds = float(endSeconds)),
+                                    text
+                                ))
 
                     else:
                         raise ValueError(f"Unexpected state in SSA/ASS file reading: {section}")
+
+                self.subtitles.sort(key = lambda sub: sub.start_timestamp)
 
         except Exception as ex:
             print("Failed to decode SSA/ASS file")

@@ -1,5 +1,6 @@
 import os
 import subprocess
+import tqdm
 
 
 MOVIES_DIR = "/Volumes/videos/Movies/"
@@ -12,6 +13,9 @@ BOLD = "\033[1m"
 END = "\033[0m"
 
 def main():
+    total_files = len(os.listdir(MOVIES_DIR)) + sum(len(os.listdir(f"{SERIES_DIR}{dir}/")) for dir in os.listdir(SERIES_DIR) if not dir.startswith("."))
+    progress_bar = tqdm.tqdm(total = total_files, unit = "file(s)")
+
     movies = []
     for file in os.listdir(MOVIES_DIR):
         if file.startswith("."):
@@ -30,7 +34,7 @@ def main():
                 "duration": seconds,
                 "metric": metric
             })
-        print(f"OK - {file}")
+        progress_bar.update()
 
     series = []
     for dir in os.listdir(SERIES_DIR):
@@ -55,7 +59,8 @@ def main():
                         "duration": seconds,
                         "metric": metric
                     })
-                print(f"OK - {file}")
+                #print(f"OK - {file}")
+                progress_bar.update()
 
             seconds = sum(episode["duration"] for episode in episodes)
             size = sum(episode["size"] for episode in episodes)
@@ -63,13 +68,21 @@ def main():
             series.append({
                 "title": dir,
                 "codec": " - ".join(set(episode["codec"] for episode in episodes)),
-                "size": seconds,
-                "duration": size,
+                "size": size,
+                "duration": seconds,
                 "metric": metric
             })
 
+    progress_bar.close()
+
     for movie in sorted(movies + series, key = lambda m: m["metric"]):
-        print(f"{GREEN if movie['metric'] < 1.2 else YELLOW if movie['metric'] < 2 else RED}{movie['metric']:0<4} Go/h{END} {GREEN if movie['codec'] == 'av1' else YELLOW if movie['codec'] == 'hevc' else RED if movie['codec'] == 'h264' else ''}({movie['codec']:<4}){END} - {movie['title']}")
+        print(f"{GREEN if movie['metric'] < 1.2 else YELLOW if movie['metric'] < 2 else RED}{movie['metric']:0<4} Go/h{END} {GREEN if movie['codec'] == 'av1' else YELLOW if movie['codec'] == 'hevc' else RED if movie['codec'] == 'h264' else ''}({movie['codec']:<4}){END} - {round(movie['size'] / 1e9, 2)}Go/{int(movie['duration'] // 3600)}h{(int(movie['duration'] % 3600) // 60):0<2} - {movie['title']}")
+    total_size = sum(movie["size"] for movie in movies)
+    total_duration = sum(movie["duration"] for movie in movies)
+    total_metric = round((total_size / 1e9) / (total_duration / 3600), 2)
+    print(f"--> Total size of everything: {round(total_size / 1e9, 2)} Go")
+    print(f"--> Total duration of everything: {int(total_duration // 3600)}h{(int(total_duration % 3600) // 60):0<2}")
+    print(f"--> Mean metric of everything: {total_metric} Go/h")
 
 if __name__ == "__main__":
     main()
