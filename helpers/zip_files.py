@@ -1,8 +1,8 @@
 import os
 import pymkv
 
-AV1_DIR = "/Volumes/videos/Unformated/out/Code Lyoko/"
-MKV_DIR = "/Volumes/videos/Unformated/in/Code Lyoko (2003) - FRE/"
+AV1_DIR = "/Users/anael/Movies/Films/test_in/Code Lyoko (AV1)/"
+MKV_DIR = "/Users/anael/Movies/Films/test_in/Code Lyoko (2003) - FRE/"
 OUTPUT_DIR = "/Users/anael/Movies/Films/test_out/Code Lyoko (MKV+AV1)/"
 
 for av1_file_name, mkv_file_name in zip(sorted(filter(lambda f: not f.startswith("."), os.listdir(AV1_DIR))), sorted(filter(lambda f: not f.startswith("."), os.listdir(MKV_DIR)))):

@@ -76,12 +76,12 @@ def main():
     progress_bar.close()
 
     for movie in sorted(movies + series, key = lambda m: m["metric"]):
-        print(f"{GREEN if movie['metric'] < 1.2 else YELLOW if movie['metric'] < 2 else RED}{movie['metric']:0<4} Go/h{END} {GREEN if movie['codec'] == 'av1' else YELLOW if movie['codec'] == 'hevc' else RED if movie['codec'] == 'h264' else ''}({movie['codec']:<4}){END} - {round(movie['size'] / 1e9, 2)}Go/{int(movie['duration'] // 3600)}h{(int(movie['duration'] % 3600) // 60):0<2} - {movie['title']}")
-    total_size = sum(movie["size"] for movie in movies)
-    total_duration = sum(movie["duration"] for movie in movies)
+        print(f"{GREEN if movie['metric'] < 1.2 else YELLOW if movie['metric'] < 2 else RED}{movie['metric']:0<4} Go/h{END} {GREEN if movie['codec'] == 'av1' else YELLOW if movie['codec'] == 'hevc' else RED if movie['codec'] == 'h264' else ''}({movie['codec']:<4}){END} - {round(movie['size'] / 1e9, 2)}Go/{int(movie['duration'] // 3600)}h{(int(movie['duration'] % 3600) // 60):0>2} - {movie['title']}")
+    total_size = sum(movie["size"] for movie in movies + series)
+    total_duration = sum(movie["duration"] for movie in movies + series)
     total_metric = round((total_size / 1e9) / (total_duration / 3600), 2)
     print(f"--> Total size of everything: {round(total_size / 1e9, 2)} Go")
-    print(f"--> Total duration of everything: {int(total_duration // 3600)}h{(int(total_duration % 3600) // 60):0<2}")
+    print(f"--> Total duration of everything: {int(total_duration // 3600)}h{(int(total_duration % 3600) // 60):0>2} ({total_duration} seconds)")
     print(f"--> Mean metric of everything: {total_metric} Go/h")
 
 if __name__ == "__main__":
