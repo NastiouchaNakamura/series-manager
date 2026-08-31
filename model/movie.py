@@ -101,7 +101,7 @@ class Movie:
                 index = int(fields[0])
                 codec_name = fields[1]
                 type = fields[2]
-                language = fields[3].upper()
+                language = fields[3].upper() if len(fields) > 3 else self.original_language
                 title = fields[4] if len(fields) > 4 else ""
 
                 if type == "video":
