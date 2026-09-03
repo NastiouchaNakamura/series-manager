@@ -51,6 +51,9 @@ class Audio:
 
         elif self.codec is AudioCodec.FLAC:
             self.transcode_to_acc(increment_progress_bar)
+
+        elif self.codec is AudioCodec.DTS:
+            self.transcode_to_acc(increment_progress_bar)
         
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
@@ -69,6 +72,9 @@ class Audio:
             return int(self.duration)
 
         elif self.codec is AudioCodec.FLAC:
+            return int(self.duration)
+        
+        elif self.codec is AudioCodec.DTS:
             return int(self.duration)
         
         else:

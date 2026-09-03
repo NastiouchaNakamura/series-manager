@@ -19,6 +19,7 @@ def main():
     movies = []
     for file in os.listdir(MOVIES_DIR):
         if file.startswith("."):
+            progress_bar.update()
             continue
         else:
             file_path = f"{MOVIES_DIR}{file}"
@@ -39,6 +40,7 @@ def main():
     series = []
     for dir in os.listdir(SERIES_DIR):
         if dir.startswith("."):
+            progress_bar.update()
             continue
         else:
             episodes = []
