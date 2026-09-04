@@ -2,9 +2,9 @@ from model.movie import Movie
 import tempfile
 
 
-def process(file_path: str, output_dir: str, temp_dir: str, title: str, year: int, original_language: str, season: int | None = None, episode: int | None = None, force_av1: bool = False, mkvtools_path: str = "") -> bool:
+def process(file_path: str, output_dir: str, temp_dir: str, title: str, year: int, original_language: str, season: str | None = None, episode: str | None = None, force_av1: bool = False, mkvtools_path: str = "") -> bool:
     # Affichage
-    print(f"\n -- {title} ({year}){f' S{season:02d}E{episode:02d}' if season is not None and episode is not None else ''} -- ")
+    print(f"\n -- {title} ({year}){f' S{season}E{episode}' if season is not None and episode is not None else ''} -- ")
 
     # Vérification
     if (season is None and episode is not None) or (season is not None and episode is None):
