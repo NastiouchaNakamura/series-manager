@@ -46,6 +46,9 @@ class Audio:
         elif self.codec is AudioCodec.EAC3:
             increment_progress_bar()
             
+        elif self.codec is AudioCodec.MP3:
+            increment_progress_bar()
+            
         elif self.codec is AudioCodec.VORBIS:
             self.transcode_to_acc(increment_progress_bar)
 
@@ -66,6 +69,9 @@ class Audio:
             return 0
         
         elif self.codec is AudioCodec.EAC3:
+            return 0
+        
+        elif self.codec is AudioCodec.MP3:
             return 0
         
         elif self.codec is AudioCodec.VORBIS:
