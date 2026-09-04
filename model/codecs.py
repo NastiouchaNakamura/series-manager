@@ -18,11 +18,12 @@ class Codec(str, Enum):
 
 
 class VideoCodec(Codec):
-    #       MKVTool                FFMPEG  FFMPEG   File
-    #       name                   name    encoder  extension
-    AV1  = ("AV1",                 "av1",  None,    ".av1") # Optimized
-    H265 = ("HEVC/H.265/MPEG-H",   "h265", None,    ".h265")
-    H264 = ("AVC/H.264/MPEG-4p10", "h264", None,    ".h264")
+    #          MKVTool                FFMPEG  FFMPEG   File
+    #          name                   name    encoder  extension
+    AV1     = ("AV1",                 "av1",   None,    ".av1") # Optimized
+    H265    = ("HEVC/H.265/MPEG-H",   "h265",  None,    ".h265")
+    H264    = ("AVC/H.264/MPEG-4p10", "h264",  None,    ".h264")
+    MPEG4p2 = ("MPEG-4p2",            "mpeg4", None,    ".avi")
 
     @classmethod
     def by_name(cls, name) -> VideoCodec:
