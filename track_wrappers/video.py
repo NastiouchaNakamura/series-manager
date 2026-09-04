@@ -62,6 +62,12 @@ class Video:
                 self.transcode_to_av1(increment_progress_bar)
             else:
                 return
+
+        elif self.codec is VideoCodec.MPEG4p2:
+            if force_av1 or self.should_be_optimized():
+                self.transcode_to_av1(increment_progress_bar)
+            else:
+                return
         
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
@@ -77,6 +83,12 @@ class Video:
                 return 0
 
         elif self.codec is VideoCodec.H264:
+            if force_av1 or self.should_be_optimized():
+                return int(self.duration)
+            else:
+                return 0
+
+        elif self.codec is VideoCodec.MPEG4p2:
             if force_av1 or self.should_be_optimized():
                 return int(self.duration)
             else:
