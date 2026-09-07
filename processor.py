@@ -2,20 +2,22 @@ from model.movie import Movie
 import tempfile
 
 
-def process(file_path: str, output_dir: str, temp_dir: str, title: str, year: int, original_language: str, season: str | None = None, episode: str | None = None, force_av1: bool = False, mkvtools_path: str = "") -> bool:
+def process(file_path: str, output_dir: str, temp_dir: str, title: str, year: int, original_language: str, season: str | None = None, episode: str | None = None, to_episode: str | None = None, force_av1: bool = False, mkvtools_path: str = "") -> bool:
     # Affichage
     print(f"\n -- {title} ({year}){f' S{season}E{episode}' if season is not None and episode is not None else ''} -- ")
 
     # Vérification
     if (season is None and episode is not None) or (season is not None and episode is None):
         raise ValueError("Season and episode must both be None or both be not None")
+    if to_episode is not None and episode is None:
+        raise ValueError("Multi episode file without start episode number")
 
     # Dossier temporaire
     sub_temp_dir = tempfile.TemporaryDirectory(dir = temp_dir)
 
     # Manipulation de l'objet vidéo
     try:
-        movie = Movie(title, year, season, episode, original_language = original_language, temp_dir = sub_temp_dir, mkvtools_path = mkvtools_path)
+        movie = Movie(title, year, season, episode, to_episode, original_language = original_language, temp_dir = sub_temp_dir, mkvtools_path = mkvtools_path)
         movie.load_file(file_path)
         movie.optimize(force_av1 = force_av1)
         movie.make_metadata()

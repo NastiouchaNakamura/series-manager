@@ -1,4 +1,3 @@
-import os
 import platform
 import shutil
 import subprocess
@@ -14,12 +13,12 @@ from model.codecs import VideoCodec, AudioCodec, SubtitlesCodec
 
 
 class Movie:
-    def __init__(self, title: str, year: int, season: str | None = None, episode: str | None = None, original_language: str = "UND", temp_dir: tempfile.TemporaryDirectory | None = None, mkvtools_path: str = ""):
+    def __init__(self, title: str, year: int, season: str | None = None, episode: str | None = None, to_episode: str | None = None, original_language: str = "UND", temp_dir: tempfile.TemporaryDirectory | None = None, mkvtools_path: str = ""):
         if (season is None and episode is not None) or (season is not None and episode is None):
-                raise ValueError("Season and episode must both be None or both be not None")
+            raise ValueError("Season and episode must both be None or both be not None")
         
         self.is_series: bool = season is not None and episode is not None
-        self.title: str = f"{title} ({year})" if not self.is_series else f"{title} - S{season}E{episode}"
+        self.title: str = f"{title} ({year})" if not self.is_series else f"{title} - S{season}E{episode}" + (f"-{to_episode}" if to_episode is not None else "")
         self.original_language: str = original_language.upper()
         self.temp_dir: tempfile.TemporaryDirectory = tempfile.TemporaryDirectory() if temp_dir is None else temp_dir
         self.mkvtools_path = mkvtools_path

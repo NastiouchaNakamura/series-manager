@@ -99,13 +99,16 @@ if __name__ == "__main__":
                 # Chaque épisode
                 success_for_all = True
                 for file_name in sorted([file for file in os.listdir(f"{input_dir}{dir_name}/") if os.path.isfile(f"{input_dir}{dir_name}/{file}") and not file.startswith(".") and not file.startswith("DONE - ")]):
-                    finds = re.findall(r"S(?P<season_no>\d\d)E(?P<episode_no>\d\d\d?)", file_name)
-                    if len(finds) == 0:
+                    match = re.search(r"S(?P<season_no>\d\d)E(?P<episode_no>\d\d\d?)(-(?P<to_episode_no>\d\d\d?))?", file_name)
+                    if match is None:
                         print(f"{RED}Badly named episode (can't find season and episode numbers): {file_name}{END}")
                         continue
                     else:
-                        season_no, episode_no = finds[0]
-                        success = process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/", temp_dir, title, year, original_language, season_no, episode_no, force_av1 = force_av1, mkvtools_path = mkvtools_path)
+                        season_no = match.group("season_no")
+                        episode_no = match.group("episode_no")
+                        to_episode_no = match.group("to_episode_no")
+
+                        success = process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/", temp_dir, title, year, original_language, season_no, episode_no, to_episode_no, force_av1 = force_av1, mkvtools_path = mkvtools_path)
                         if success:
                             os.rename(f"{input_dir}{dir_name}/{file_name}", f"{input_dir}{dir_name}/DONE - {file_name}")
                         else:
