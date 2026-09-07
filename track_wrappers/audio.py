@@ -50,13 +50,13 @@ class Audio:
             increment_progress_bar()
             
         elif self.codec is AudioCodec.VORBIS:
-            self.transcode_to_acc(increment_progress_bar)
+            self.transcode_to_aac(increment_progress_bar)
 
         elif self.codec is AudioCodec.FLAC:
-            self.transcode_to_acc(increment_progress_bar)
+            self.transcode_to_aac(increment_progress_bar)
 
         elif self.codec is AudioCodec.DTS:
-            self.transcode_to_acc(increment_progress_bar)
+            self.transcode_to_aac(increment_progress_bar)
         
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
@@ -86,11 +86,11 @@ class Audio:
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
 
-    def transcode_to_acc(self, increment_progress_bar: Callable[[], None]) -> None:
+    def transcode_to_aac(self, increment_progress_bar: Callable[[], None]) -> None:
         # Chemin
         acc_file_path = f"{self.temp_dir.name}/{id(self)}.aac"
 
-        # Transcodage ACC :
+        # Transcodage AAC :
         proc = subprocess.Popen(["ffmpeg", "-i", self.file_path, "-codec:a", "aac", acc_file_path], stderr = subprocess.PIPE, stdout = subprocess.PIPE)
 
         if proc.stderr is None:
