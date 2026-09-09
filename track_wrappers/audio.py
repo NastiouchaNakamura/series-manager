@@ -35,6 +35,18 @@ class Audio:
             os.remove(self.file_path)
             self.file_path = remade_file_path
             self.duration: float = float(subprocess.run(['ffprobe', "-v", "error", "-select_streams", "a:0", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", self.file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout)
+        else:
+            # Sinon, c'est le cas général d'un codec relou qui ne donne pas
+            # sa durée. Donc on copie le codec et on pourra obtenir la durée
+            # lors de la copie.
+            remade_file_path = f"{self.file_path}_dummy{self.codec.file_extension}"
+            subproc = subprocess.run(["ffmpeg", "-i", self.file_path, "-codec:a", "copy", remade_file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            sumup_line = subproc.stdout.strip().split(b"\n")[-1] # Format: b'size= 3521116KiB time=01:41:13.53 bitrate=4749.3kbits/s speed= 748x elapsed=0:00:08.11'
+            match = re.search(r"time=(?P<hours>\d\d):(?P<minutes>\d\d):(?P<seconds>\d\d.\d\d)", sumup_line.decode("utf-8"))
+            if match is None:
+                raise ValueError("Couldn't find audio duration even using ffmpeg")
+            else:
+                self.duration = int(match.group("hours")) * 3600 + int(match.group("minutes")) * 60 + float(f"{match.group("seconds")}")
 
     def optimize(self, increment_progress_bar: Callable[[], None] = lambda: None) -> None:
         if self.codec is AudioCodec.AAC:
@@ -115,10 +127,10 @@ class Audio:
         while proc.poll() is None:
             next_b = proc.stderr.read(1)
             if next_b == b"\r":
-                finds = re.findall(r"time= ?(\d\d):(\d\d):(\d\d).\d\d", line.decode("utf-8"))
-                if len(finds) == 0:
+                match = re.search(r"time=(?P<hours>\d\d):(?P<minutes>\d\d):(?P<seconds>\d\d).\d\d", line.decode("utf-8"))
+                if match is None:
                     continue
-                transcoded_seconds = int(finds[0][0]) * 3600 + int(finds[0][1]) * 60 + int(float(f"{finds[0][2]}"))
+                transcoded_seconds = int(match.group("hours")) * 3600 + int(match.group("minutes")) * 60 + int(float(f"{match.group("seconds")}"))
                 for _ in range(transcoded_seconds - previously_transcoded_seconds):
                     increment_progress_bar()
                 previously_transcoded_seconds = transcoded_seconds

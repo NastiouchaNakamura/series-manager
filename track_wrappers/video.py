@@ -120,10 +120,10 @@ class Video:
         while proc.poll() is None:
             next_b = proc.stderr.read(1)
             if next_b == b"\r":
-                finds = re.findall(r"time= ?(\d\d):(\d\d):(\d\d).\d\d", line.decode("utf-8"))
-                if len(finds) == 0:
+                match = re.search(r"time=(?P<hours>\d\d):(?P<minutes>\d\d):(?P<seconds>\d\d).\d\d", line.decode("utf-8"))
+                if match is None:
                     continue
-                transcoded_seconds = int(finds[0][0]) * 3600 + int(finds[0][1]) * 60 + int(float(f"{finds[0][2]}"))
+                transcoded_seconds = int(match.group("hours")) * 3600 + int(match.group("minutes")) * 60 + int(float(f"{match.group("seconds")}"))
                 for _ in range(transcoded_seconds - previously_transcoded_seconds):
                     increment_progress_bar()
                 previously_transcoded_seconds = transcoded_seconds
