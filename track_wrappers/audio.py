@@ -57,6 +57,12 @@ class Audio:
 
         elif self.codec is AudioCodec.DTS:
             self.transcode_to_aac(increment_progress_bar)
+
+        elif self.codec is AudioCodec.DTS_HD_MA:
+            self.transcode_to_aac(increment_progress_bar)
+
+        elif self.codec is AudioCodec.DTS_HD_HRA:
+            self.transcode_to_aac(increment_progress_bar)
         
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
@@ -81,6 +87,12 @@ class Audio:
             return int(self.duration)
         
         elif self.codec is AudioCodec.DTS:
+            return int(self.duration)
+        
+        elif self.codec is AudioCodec.DTS_HD_MA:
+            return int(self.duration)
+        
+        elif self.codec is AudioCodec.DTS_HD_HRA:
             return int(self.duration)
         
         else:
