@@ -39,14 +39,15 @@ class Audio:
             # Sinon, c'est le cas général d'un codec relou qui ne donne pas
             # sa durée. Donc on copie le codec et on pourra obtenir la durée
             # lors de la copie.
-            remade_file_path = f"{self.file_path}_dummy{self.codec.file_extension}"
-            subproc = subprocess.run(["ffmpeg", "-i", self.file_path, "-codec:a", "copy", remade_file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            dummy_file_path = f"{self.file_path}_dummy{self.codec.file_extension}"
+            subproc = subprocess.run(["ffmpeg", "-i", self.file_path, "-codec:a", "copy", dummy_file_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             sumup_line = subproc.stdout.strip().split(b"\n")[-1] # Format: b'size= 3521116KiB time=01:41:13.53 bitrate=4749.3kbits/s speed= 748x elapsed=0:00:08.11'
             match = re.search(r"time=(?P<hours>\d\d):(?P<minutes>\d\d):(?P<seconds>\d\d.\d\d)", sumup_line.decode("utf-8"))
             if match is None:
                 raise ValueError("Couldn't find audio duration even using ffmpeg")
             else:
                 self.duration = int(match.group("hours")) * 3600 + int(match.group("minutes")) * 60 + float(f"{match.group("seconds")}")
+            os.remove(dummy_file_path)
 
     def optimize(self, increment_progress_bar: Callable[[], None] = lambda: None) -> None:
         if self.codec is AudioCodec.AAC:
