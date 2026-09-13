@@ -99,16 +99,21 @@ if __name__ == "__main__":
                 # Chaque épisode
                 success_for_all = True
                 for file_name in sorted([file for file in os.listdir(f"{input_dir}{dir_name}/") if os.path.isfile(f"{input_dir}{dir_name}/{file}") and not file.startswith(".") and not file.startswith("DONE - ")]):
-                    match = re.search(r"S(?P<season_no>\d\d)E(?P<episode_no>\d\d\d?)(-(?P<to_episode_no>\d\d\d?))?", file_name)
-                    if match is None:
+                    episode_code = re.search(r"S(?P<season_no>\d\d)E(?P<episode_no>\d\d\d?)(-(?P<to_episode_no>\d\d\d?))?", file_name)
+                    if episode_code is None:
                         print(f"{RED}Badly named episode (can't find season and episode numbers): {file_name}{END}")
                         continue
                     else:
-                        season_no = match.group("season_no")
-                        episode_no = match.group("episode_no")
-                        to_episode_no = match.group("to_episode_no")
+                        season_no = episode_code.group("season_no")
+                        episode_no = episode_code.group("episode_no")
+                        to_episode_no = episode_code.group("to_episode_no")
 
-                        success = process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/", temp_dir, title, year, original_language, season_no, episode_no, to_episode_no, force_av1 = force_av1, mkvtools_path = mkvtools_path)
+                        if season_no == "00" and not os.path.exists(f"{series_output_dir}{title} ({year})/Specials"):
+                            os.mkdir(f"{series_output_dir}{title} ({year})/Specials")
+                        if not os.path.exists(f"{series_output_dir}{title} ({year})/Season {season_no}"):
+                            os.mkdir(f"{series_output_dir}{title} ({year})/Season {season_no}")
+
+                        success = process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/" + "Specials/" if season_no == "00" else "Season {season_no}/", temp_dir, title, year, original_language, season_no, episode_no, to_episode_no, force_av1 = force_av1, mkvtools_path = mkvtools_path)
                         if success:
                             os.rename(f"{input_dir}{dir_name}/{file_name}", f"{input_dir}{dir_name}/DONE - {file_name}")
                         else:
