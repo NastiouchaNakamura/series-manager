@@ -104,6 +104,9 @@ class Movie:
                 title = fields[4] if len(fields) > 4 else ""
 
                 if type == "video":
+                    if codec_name == "png": # Miniature de MP4, à ignorer
+                        continue
+
                     codec = VideoCodec.by_name(codec_name)
                     # Il est impossible d'extraire en standalone quasi tous les
                     # codec vidéo (tous sauf H.265 et encore), car entre autre
