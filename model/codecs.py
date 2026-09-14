@@ -41,7 +41,7 @@ class AudioCodec(Codec):
     #         name                                 name      encoder  extension
     AAC        = ("AAC",                           "aac",    None,    ".aac") # Optimized
     AC3        = ("AC-3",                          "ac3",    None,    ".ac3") # Optimized
-    EAC3       = ("E-AC-3",                        "eac3",   None,    ".aac") # Optimized
+    EAC3       = ("E-AC-3",                        "eac3",   None,    ".mp4") # Optimized
     MP3        = ("MP3",                           "mp3",    None,    ".mp3") # Optimized
     VORBIS     = ("Vorbis",                        "vorbis", None,    ".ogg")
     FLAC       = ("FLAC",                          "flac",   None,    ".flac")
