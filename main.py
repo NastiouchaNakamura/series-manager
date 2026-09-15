@@ -26,6 +26,7 @@ if __name__ == "__main__":
         parser.add_argument("--movies-output", help = "Path to the movie output directory", required = True)
         parser.add_argument("--series-output", help = "Path to the series output directory", required = True)
         parser.add_argument("--temp", help = "Path to the temporary directory (in which temporary files and directories will be created)", required = False, default = ".")
+        parser.add_argument("--ignore-errors", help = "Whether to ignore errors in file transcoding (files causing errors will be ignored and will not be marked as DONE)", choices = ("0", "1"), required = False, default = "0")
         parser.add_argument("--force-av1", help = "Whether to force AV1 transcoding", choices = ("0", "1"), required = False, default = "0")
         parser.add_argument("--mkvtools-path", help = "Path to the directory where 'mkvmerge' and 'mkvextract' executables can be found", required = False, default = "")
 
@@ -49,6 +50,7 @@ if __name__ == "__main__":
             series_output_dir += "/"
 
         force_av1 = args.force_av1 == "1"
+        ignore_errors = args.ignore_errors == "1"
         mkvtools_path = args.mkvtools_path
 
         # Vérification des répertoires
@@ -113,7 +115,7 @@ if __name__ == "__main__":
                         elif season_no != "00" and not os.path.exists(f"{series_output_dir}{title} ({year})/Season {season_no}"):
                             os.mkdir(f"{series_output_dir}{title} ({year})/Season {season_no}")
 
-                        success = process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/" + ("Specials/" if season_no == "00" else f"Season {season_no}/"), temp_dir, title, year, original_language, season_no, episode_no, to_episode_no, force_av1 = force_av1, mkvtools_path = mkvtools_path)
+                        success = process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/" + ("Specials/" if season_no == "00" else f"Season {season_no}/"), temp_dir, title, year, original_language, season_no, episode_no, to_episode_no, ignore_errors = ignore_errors, force_av1 = force_av1, mkvtools_path = mkvtools_path)
                         if success:
                             os.rename(f"{input_dir}{dir_name}/{file_name}", f"{input_dir}{dir_name}/DONE - {file_name}")
                         else:
@@ -129,7 +131,7 @@ if __name__ == "__main__":
                 continue
             else:
                 title, year, original_language = finds[0]
-                success = process(f"{input_dir}{file_name}", movies_output_dir, temp_dir, title, year, original_language, None, None, force_av1 = force_av1, mkvtools_path = mkvtools_path)
+                success = process(f"{input_dir}{file_name}", movies_output_dir, temp_dir, title, year, original_language, None, None, ignore_errors = ignore_errors, force_av1 = force_av1, mkvtools_path = mkvtools_path)
                 if success:
                     os.rename(f"{input_dir}{file_name}", f"{input_dir}DONE - {file_name}")
 
