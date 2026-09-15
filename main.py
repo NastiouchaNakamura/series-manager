@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
                         if season_no == "00" and not os.path.exists(f"{series_output_dir}{title} ({year})/Specials"):
                             os.mkdir(f"{series_output_dir}{title} ({year})/Specials")
-                        if not os.path.exists(f"{series_output_dir}{title} ({year})/Season {season_no}"):
+                        elif season_no != "00" and not os.path.exists(f"{series_output_dir}{title} ({year})/Season {season_no}"):
                             os.mkdir(f"{series_output_dir}{title} ({year})/Season {season_no}")
 
                         success = process(f"{input_dir}{dir_name}/{file_name}", f"{series_output_dir}{title} ({year})/" + ("Specials/" if season_no == "00" else f"Season {season_no}/"), temp_dir, title, year, original_language, season_no, episode_no, to_episode_no, force_av1 = force_av1, mkvtools_path = mkvtools_path)
