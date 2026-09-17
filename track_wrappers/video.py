@@ -2,6 +2,7 @@ import re
 import subprocess
 import tempfile
 import os
+from math import ceil
 from time import sleep
 from typing import Callable
 from model.codecs import VideoCodec
@@ -78,19 +79,19 @@ class Video:
 
         elif self.codec is VideoCodec.H265:
             if force_av1 or self.should_be_optimized():
-                return int(self.duration)
+                return ceil(self.duration)
             else:
                 return 0
 
         elif self.codec is VideoCodec.H264:
             if force_av1 or self.should_be_optimized():
-                return int(self.duration)
+                return ceil(self.duration)
             else:
                 return 0
 
         elif self.codec is VideoCodec.MPEG4p2:
             if force_av1 or self.should_be_optimized():
-                return int(self.duration)
+                return ceil(self.duration)
             else:
                 return 0
         
