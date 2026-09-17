@@ -95,19 +95,19 @@ class Audio:
             return 0
         
         elif self.codec is AudioCodec.VORBIS:
-            return int(self.duration)
+            return ceil(self.duration)
 
         elif self.codec is AudioCodec.FLAC:
-            return int(self.duration)
+            return ceil(self.duration)
         
         elif self.codec is AudioCodec.DTS:
-            return int(self.duration)
+            return ceil(self.duration)
         
         elif self.codec is AudioCodec.DTS_HD_MA:
-            return int(self.duration)
+            return ceil(self.duration)
         
         elif self.codec is AudioCodec.DTS_HD_HRA:
-            return int(self.duration)
+            return ceil(self.duration)
         
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
