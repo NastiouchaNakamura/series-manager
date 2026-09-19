@@ -77,6 +77,9 @@ class Audio:
 
         elif self.codec is AudioCodec.DTS_HD_HRA:
             self.transcode_to_aac(increment_progress_bar)
+
+        elif self.codec is AudioCodec.OPUS:
+            self.transcode_to_aac(increment_progress_bar)
         
         else:
             raise ValueError(f"Codec '{self.codec}' unsupported")
@@ -107,6 +110,9 @@ class Audio:
             return ceil(self.duration)
         
         elif self.codec is AudioCodec.DTS_HD_HRA:
+            return ceil(self.duration)
+        
+        elif self.codec is AudioCodec.OPUS:
             return ceil(self.duration)
         
         else:

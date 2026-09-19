@@ -48,6 +48,7 @@ class AudioCodec(Codec):
     DTS        = ("DTS",                           "dts",    None,    ".dts")
     DTS_HD_MA  = ("DTS-HD Master Audio",           "dts",    None,    ".dts")
     DTS_HD_HRA = ("DTS-HD High Resolution Audio",  "dts",    None,    ".dts")
+    OPUS       = ("Opus",                          "opus",   None,    ".opus")
 
     @classmethod
     def by_name(cls, name) -> AudioCodec:
