@@ -85,6 +85,18 @@ if __name__ == "__main__":
         for dir in series_dirs:
             series_files.extend([file for file in os.listdir(f"{input_dir}{dir}/") if os.path.isfile(f"{input_dir}{dir}/{file}") and not file.startswith(".") and not file.startswith("DONE - ")])
         print(f"Found {len(movies_files)} movie files and {len(series_files)} series files in input directory.")
+
+        # Films
+        for file_name in movies_files:
+            finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", file_name)
+            if len(finds) == 0:
+                print(f"{RED}Badly named movie: {file_name}{END}")
+                continue
+            else:
+                title, year, original_language = finds[0]
+                success = process(f"{input_dir}{file_name}", movies_output_dir, temp_dir, title, year, original_language, None, None, ignore_errors = ignore_errors, force_av1 = force_av1, mkvtools_path = mkvtools_path)
+                if success:
+                    os.rename(f"{input_dir}{file_name}", f"{input_dir}DONE - {file_name}")
     
         # Séries
         for dir_name in series_dirs:
@@ -122,19 +134,6 @@ if __name__ == "__main__":
                             success_for_all = False
                 if success_for_all:
                     os.rename(f"{input_dir}{dir_name}", f"{input_dir}DONE - {dir_name}")
-
-        # Films
-        for file_name in movies_files:
-            finds = re.findall(r"(?P<title>.*) \((?P<year>\d\d\d\d)\) - (?P<original_language>...)", file_name)
-            if len(finds) == 0:
-                print(f"{RED}Badly named movie: {file_name}{END}")
-                continue
-            else:
-                title, year, original_language = finds[0]
-                success = process(f"{input_dir}{file_name}", movies_output_dir, temp_dir, title, year, original_language, None, None, ignore_errors = ignore_errors, force_av1 = force_av1, mkvtools_path = mkvtools_path)
-                if success:
-                    os.rename(f"{input_dir}{file_name}", f"{input_dir}DONE - {file_name}")
-
 
     except KeyboardInterrupt:
         print("Video Transcoder interrupted.")
